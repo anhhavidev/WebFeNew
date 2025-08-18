@@ -1,0 +1,18 @@
+.custom-slider .slick-dots {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  z-index: 2;
+}
+
+.custom-slider .slick-dots li button:before {
+  color: white;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.custom-slider .slick-dots li.slick-active button:before {
+  color: white;
+  opacity: 1;
+}

@@ -1,0 +1,12 @@
+.table img {
+  border-radius: 4px;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.4em 0.6em;
+}
+
+h4 {
+  font-weight: 600;
+}

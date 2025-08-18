@@ -1,0 +1,126 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.title {
+    display: flex;
+    justify-content: space-around;
+    background-color: black;
+}
+
+.theul {
+    display: flex;
+    margin: 0;
+}
+
+.theul li {
+    padding: 8px;
+    list-style-type: none;
+    position: relative;
+}
+
+.theul li:not(:last-child)::after {
+    content: "";
+    height: 16px;
+    width: 1px;
+    background-color: #ffffff4d;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+    top: 30%;
+}
+
+.theul li a {
+    text-decoration: none;
+    font-size: 13px;
+    color: white;
+}
+.theul li a:hover {
+    text-decoration: underline;
+}
+.header {
+    width: 100%;
+
+}
+.hedaer3 {
+    width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.middle {
+    position: relative;
+
+}
+.middle input {
+    width: 400px;
+    padding: 8px;
+    border-radius: 8px;
+    border-color: #ccc;
+}
+.middle button {
+    position: absolute;
+    background-color: #000;
+    border: none;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    border-radius: 0px 8px 8px;
+}
+.right {
+    display: flex;
+    align-items: center;
+}
+.right2 {
+    padding: 0 16px;
+}
+.right2 p {
+    margin: 0;
+    padding: 4px 0;
+}
+
+
+.dropdownItem {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+.drop {
+    position: relative;
+}
+.droptogle{
+    color: yellow;
+    cursor: pointer;
+    font-size: 13px;
+}
+.dropdownmenu{
+    position: absolute;
+    background-color: white;
+    top: 100%;
+    right: 0;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    list-style: none;
+  padding: 10px;
+  margin: 0;
+  z-index: 1000;
+  min-width: 150px;
+}
+.dropdownItem{
+     white-space: nowrap; /* Không xuống dòng */
+     background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+.dropdownItem:hover {
+  background-color: #f2f2f2;
+}

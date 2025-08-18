@@ -1,0 +1,30 @@
+.order-detail-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ddd;
+}
+
+.order-products-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.order-products-table th, .order-products-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.order-total {
+  margin-top: 15px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.order-actions button {
+  margin-right: 10px;
+}

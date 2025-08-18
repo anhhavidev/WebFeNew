@@ -1,0 +1,100 @@
+.checkoutContainer {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 24px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+}
+
+.checkoutHeader {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+.cartItemList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cartItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cartItemImage {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+.checkoutContent {
+  display: flex;
+  gap: 32px;
+   flex-wrap: wrap; /* 👉 Thêm dòng này */
+}
+
+.leftColumn {
+  flex: 1 1 45%;
+  min-width: 300px;
+}
+.rightColumn {
+  flex: 1 1 45%;
+  min-width: 300px;
+}
+
+
+.addressSection,
+.noteSection,
+.cartSection,
+.totalSection {
+  margin-bottom: 16px;
+}
+
+.inputField {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.orderButton {
+  width: 100%;
+  padding: 12px;
+  background-color: #000;
+  color: white;
+}
+.cartPreview {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px dashed #ccc;
+}
+
+.cartPreview ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cartPreview li {
+  margin: 4px 0;
+}
+.addressItem {
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.addressItem input[type="radio"] {
+  accent-color: #333;
+}

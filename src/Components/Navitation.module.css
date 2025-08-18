@@ -1,0 +1,47 @@
+.navbar {
+  width: 100%;
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  padding: 10px 0;
+}
+
+.navList {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  padding: 0 20px;
+  margin: 0;
+  gap: 30px; /* khoảng cách giữa các mục */
+  flex-wrap: wrap; /* nếu dài quá thì xuống dòng */
+}
+
+.navItem {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.navLink {
+  text-decoration: none;
+  color: #222;
+  transition: color 0.3s ease;
+}
+
+.navLink:hover {
+  color: #ff6600; /* màu khi hover (cam nhạt) */
+}
+.navLink {
+  text-decoration: none;
+  color: #333;
+  padding: 8px 12px;
+  display: inline-block;
+}
+
+.active {
+  font-weight: bold;
+  color: #fff;
+  background-color: #007bff;
+  border-radius: 4px;
+}

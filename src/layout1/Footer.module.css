@@ -1,0 +1,41 @@
+.footer {
+  background-color: #222;
+  color: white;
+  padding: 40px 20px 20px;
+  margin-top: 40px;
+}
+.columns {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.columns div {
+  flex: 1;
+  min-width: 200px;
+  margin-right: 20px;
+}
+.columns h4 {
+  margin-bottom: 10px;
+  color: #f1c40f;
+}
+.columns ul {
+  list-style: none;
+  padding: 0;
+}
+.columns ul li {
+  margin-bottom: 5px;
+}
+.columns ul li a {
+  color: white;
+  text-decoration: none;
+}
+.columns ul li a:hover {
+  text-decoration: underline;
+}
+.copy {
+  text-align: center;
+  border-top: 1px solid #444;
+  padding-top: 10px;
+  margin-top: 20px;
+  font-size: 14px;
+}
