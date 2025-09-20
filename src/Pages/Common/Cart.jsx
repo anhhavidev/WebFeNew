@@ -17,10 +17,15 @@ export default function Cart() {
   const { ensureTokenValid } = useAuth();
   const { setCartCount } = useCart();
   const navigate = useNavigate();
-
   const handleBuyNow = () => {
-    navigate("/checkout");
+    const selected = cartItems.filter(item => item.isChecked);
+    if (selected.length === 0) {
+      alert("❌ Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
+      return;
+    }
+    navigate("/checkout", { state: { selectedItems: selected } });
   };
+
 
   useEffect(() => {
     if (!debouncedItem) return;

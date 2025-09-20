@@ -33,4 +33,25 @@ export async function UpdateOrderStatus(orderId, status, token) {
 
   return await res.json();
 }
-
+export async function CancelOrderAdmin(orderId, reason, token) {
+    const res = await fetch(`${API}/cancel-admin/${orderId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(reason) // chỉ stringify chuỗi, không bọc thêm object
+    });
+    if (!res.ok) throw new Error("Hủy đơn thất bại");
+    return await res.json();
+}
+export async function getOrderDetailAdmin(orderId,token){
+  const res = await fetch(`${API}/detail/${orderId}`, {
+        method: "GET",  // GET thay vì PUT
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    if (!res.ok) throw new Error("Lấy chi tiết đơn hàng thất bại");
+    return await res.json();
+}

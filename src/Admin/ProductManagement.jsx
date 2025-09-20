@@ -12,7 +12,7 @@ const ProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [editingProductId, setEditingProductId] = useState(null);
   // Bộ lọc
   // State cho input tạm
   const [searchInput, setSearchInput] = useState("");
@@ -41,7 +41,7 @@ const ProductManagement = () => {
 
     setPageIndex(1); // reset về trang đầu
   };
-
+ /// resestfillter 
   const handleResetFilters = () => {
     setSearchInput("");
     setCategoryInput("");
@@ -59,20 +59,20 @@ const ProductManagement = () => {
   };
   // mở đóng form 
   const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  // const [editingProduct, setEditingProduct] = useState(null);
   const handleAdd = () => {
-    setEditingProduct(null);   // Thêm mới → không có dữ liệu cũ
+    setEditingProductId(null);   // Thêm mới → không có dữ liệu cũ
     setShowForm(true);
   };
 
   const handleEdit = (product) => {
-    setEditingProduct(product); // Sửa → truyền dữ liệu sản phẩm
+    setEditingProductId(product.productId); // Sửa → truyền dữ liệu sản phẩm
     setShowForm(true);
   };
   const handleSave = async (data) => {
     try {
-      if (editingProduct) {
-        await updateProduct(editingProduct.id, data);
+      if (editingProductId) {
+        await updateProduct(editingProductId, data);
       } else {
         await addProduct(data);
       }
@@ -380,7 +380,7 @@ const ProductManagement = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
-                  {editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm"}
+                  {editingProductId ? "Sửa sản phẩm" : "Thêm sản phẩm"}
                 </h5>
                 <button
                   type="button"
@@ -391,7 +391,7 @@ const ProductManagement = () => {
               <div className="modal-body">
                 <ProductForm
                   categories={categories}
-                  product={editingProduct}
+                  productId={editingProductId}   // 👈 chỉ truyền id , prop tự định nghĩa 
                   onSave={handleSave}
                   onCancel={() => setShowForm(false)}
                 />

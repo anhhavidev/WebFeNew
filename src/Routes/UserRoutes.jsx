@@ -10,10 +10,14 @@ import MyOrdersPage from "../Pages/Common/MyOrdersPage";
 import RetryPaymentPage from "../Pages/Common/RetryPaymentPage"; // 👈 mới thêm
 import OrderDetail from "../Pages/Common/OrderDetail";
 import OrderSuccessPage from "../Pages/Common/OrderSuccessPage";
+import UserProfile from "../Pages/Common/UserProfile";
+import UserLayout from "../layout1/UserLayout";
 
 const UserRoutes = () => {
   return (
     <Routes>
+       {/* ✅ Thêm trang thông tin tài khoản */}
+        <Route path="/getinfor" element={<UserLayout><UserProfile /></UserLayout>} />
       <Route
         path="/cart"
         element={

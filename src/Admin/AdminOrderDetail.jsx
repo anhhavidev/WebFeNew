@@ -1,29 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getOrderDetail } from "../../Service/OrderAPI";
-import "./OrderDetail.css";
-import UserLayout from "../../layout1/UserLayout";
-import useAuth from '../../Hooks/useAuth';
+import { useParams,useNavigate  } from "react-router-dom";
+import { getOrderDetailAdmin } from "../Service/Admin/OrderAdminApi";
+import "../Pages/Common/OrderDetail.css";
+import AdminLayout from "../layout1/Dashboard";
+import useAuth from '../Hooks/useAuth';
 
-export default function OrderDetail() {
-  const { orderId } = useParams(); // lấy từ url 
-  const [orderDetail, setOrderDetail] = useState(null); // lưu OrderDetailDTO
-
+export default function AdminOrderDetail() {
+  const { orderId } = useParams();
+  const [orderDetail, setOrderDetail] = useState(null);
+const navigate = useNavigate(); // dùng để điều hướng back
   const { ensureTokenValid } = useAuth();
 
   useEffect(() => {
     async function fetchOrder() {
       const token = await ensureTokenValid();
       if (!token) {
-        window.location.href = "/login";
+        window.location.href = "/admin/login";
         return;
       }
 
       try {
         if (!orderId) return;
-        const data = await getOrderDetail(orderId, token);
-        console.log("Dữ liệu API trả về:", data);
-        setOrderDetail(data);
+        const data = await getOrderDetailAdmin(orderId, token);
+        setOrderDetail(data.data);
       } catch (error) {
         console.error("Lỗi khi lấy chi tiết đơn hàng:", error);
       }
@@ -31,6 +30,7 @@ export default function OrderDetail() {
 
     fetchOrder();
   }, [orderId]);
+ if (!orderDetail) return <div>Đang tải chi tiết đơn hàng...</div>; // ✅ check null
   function getStatusText(status) {
     switch (status) {
       case "Pending":
@@ -50,28 +50,29 @@ export default function OrderDetail() {
 
 
 
-  if (!orderDetail) return <div>Đang tải đơn hàng...</div>;
-
-
-  // const tongTienSanPham = orderDetail.Items.reduce(
-  //   (sum, item) => sum + item.Quantity * item.UnitPrice,
-  //   0
-  // );
-  // const tongCong = tongTienSanPham + orderDetail.PhiGiaoHang;
-
+  
 
   return (
-    <UserLayout>
+   
       <div className="container mt-4">
+        <div className="d-flex justify-content-between mb-2 "> 
         <h3>🧾 Chi tiết đơn hàng #{orderDetail.orderId}</h3>
+          <button
+            className="btn btn-secondary"
+            onClick={() => navigate("/admin/dashboard/orders")}
+          >
+            ← Quay lại
+          </button>
+        </div>
         <form className="border p-4 rounded shadow-sm bg-light">
+
+          {/* Thông tin đơn hàng */}
           <div className="row mb-3">
             <label className="col-sm-2 col-form-label">Mã đơn hàng:</label>
             <div className="col-sm-10">
               <input type="text" readOnly className="form-control" value={`#${orderDetail.orderId}`} />
             </div>
           </div>
-
           <div className="row mb-3">
             <label className="col-sm-2 col-form-label">Trạng thái:</label>
             <div className="col-sm-10">
@@ -79,55 +80,81 @@ export default function OrderDetail() {
             </div>
           </div>
 
+          {/* Thông tin khách hàng */}
+          <h5>👤 Khách hàng</h5>
           <div className="row mb-3">
-            <label className="col-sm-2 col-form-label">Phương thức thanh toán:</label>
+            <label className="col-sm-2 col-form-label">Tên khách hàng:</label>
             <div className="col-sm-10">
-              <input type="text" readOnly className="form-control" value={`${orderDetail.payMethodName} - ${orderDetail.paymentStatus}`} />
+              <input type="text" readOnly className="form-control" value={orderDetail.hoTen} />
+            </div>
+          </div>
+          <div className="row mb-3">
+            <label className="col-sm-2 col-form-label">Email:</label>
+            <div className="col-sm-10">
+              <input type="text" readOnly className="form-control" value={orderDetail.email} />
+            </div>
+          </div>
+          <div className="row mb-3">
+            <label className="col-sm-2 col-form-label">Số điện thoại:</label>
+            <div className="col-sm-10">
+              <input type="text" readOnly className="form-control" value={orderDetail.sdt} />
             </div>
           </div>
 
           <hr />
 
+          {/* Danh sách sản phẩm */}
           <h5>📦 Danh sách sản phẩm</h5>
           {orderDetail.items.map((item, index) => (
             <div key={index} className="d-flex border p-2 mb-2 rounded align-items-center bg-white">
               <img
                 src={item.productImage}
-                alt={item.ProductName}
+                alt={item.productName}
                 style={{ width: "80px", height: "80px", objectFit: "cover", marginRight: "15px", border: "1px solid #ddd" }}
               />
               <div className="flex-grow-1">
-                <div><strong>{item.ProductName}</strong></div>
+                <div><strong>{item.productName}</strong></div>
                 <div>Số lượng: {item.quantity} × {item.unitPrice.toLocaleString()}đ</div>
                 <div>{item.totalPrice.toLocaleString()}đ</div>
               </div>
             </div>
           ))}
 
+          <hr />
 
+          {/* Thanh toán & địa chỉ */}
+          <div className="row mb-3">
+            <label className="col-sm-2 col-form-label">Phương thức thanh toán:</label>
+            <div className="col-sm-10">
+              <input type="text" readOnly className="form-control" value={`${orderDetail.payMethodName} - ${orderDetail.paymentStatus}`} />
+            </div>
+          </div>
           <div className="row mb-3">
             <label className="col-sm-2 col-form-label">Địa chỉ giao:</label>
             <div className="col-sm-10">
               <textarea className="form-control" readOnly value={orderDetail.diaChiGiao} rows={2}></textarea>
             </div>
           </div>
-          <div className="row mb-3">
-            <label className="col-sm-2 col-form-label">Ghi chú</label>
-            <div className="col-sm-10">
-              <textarea className="form-control" readOnly value={orderDetail.note ? orderDetail.note : "Ko có ghi chú "} rows={2}></textarea>
+          {orderDetail.note && (
+            <div className="row mb-3">
+              <label className="col-sm-2 col-form-label">Ghi chú:</label>
+              <div className="col-sm-10">
+                <textarea className="form-control" readOnly value={orderDetail.note} rows={2}></textarea>
+              </div>
             </div>
-          </div>
+          )}
           {orderDetail.cancelReason && (
             <div className="row mb-3">
-            <label className="col-sm-2 col-form-label">Lý do hủy</label>
-            <div className="col-sm-10">
-              <textarea className="form-control" readOnly value={orderDetail.cancelReason } rows={2}></textarea>
+              <label className="col-sm-2 col-form-label">Lý do hủy:</label>
+              <div className="col-sm-10">
+                <textarea className="form-control" readOnly value={orderDetail.cancelReason} rows={2}></textarea>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
           <hr />
 
+          {/* Tổng kết */}
           <h5>💰 Tổng kết</h5>
           <div className="row mb-2">
             <label className="col-sm-2 col-form-label">Tổng sản phẩm:</label>
@@ -148,12 +175,13 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          <div className="d-flex justify-content-end mt-4">
-            <button className="btn btn-danger me-2">Hủy đơn</button>
-            <button className="btn btn-secondary">Xem vận đơn</button>
-          </div>
+         
+          
+
+          
+         
         </form>
       </div>
-    </UserLayout>
+   
   );
 }

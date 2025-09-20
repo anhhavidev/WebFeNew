@@ -6,6 +6,8 @@ import PrivateAdmin from "./PrivateAdmin";
 import Overview from "../Admin/Overview";
 import ManagerDonHang from "../Admin/ManagerDonHang";
 import ProductManagement from "../Admin/ProductManagement";
+import AdminOrderDetail from "../Admin/AdminOrderDetail";
+import UserManagement from "../Admin/UserManagement";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -13,6 +15,8 @@ const AdminRoutes = () => {
         <Route index element={<Overview />} />                      // Mặc định
         <Route path="products" element={<ProductManagement />} />         // /admin/dashboard/products
         <Route path="orders" element={<ManagerDonHang />} />             // /admin/dashboard/orders
+        <Route path="order/:orderId" element={<AdminOrderDetail />} />
+        <Route path="users" element={<UserManagement></UserManagement>}></Route>
       </Route>
     </Routes>
   );

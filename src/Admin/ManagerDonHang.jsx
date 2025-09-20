@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { GetAllOrder, UpdateOrderStatus } from "../Service/Admin/OrderAdminApi";
+import { GetAllOrder, UpdateOrderStatus, CancelOrderAdmin } from "../Service/Admin/OrderAdminApi";
 import useAuth from '../Hooks/useAuth';
-
+import { useNavigate } from "react-router-dom";
 export default function ManagerDonHang() {
     const [orders, setOrders] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
     const { ensureTokenValid } = useAuth();
-
+    const navigate = useNavigate();
     useEffect(() => {
         const fetchData = async () => {
             const token = await ensureTokenValid();
@@ -15,7 +15,7 @@ export default function ManagerDonHang() {
 
             try {
                 const data = await GetAllOrder(currentPage, 5, token);
-                setOrders(data.items.map(item => ({
+                setOrders(data.items.map(item => ({ //sao chép 
                     ...item,
                     originalStatus: item.status // lưu trạng thái ban đầu để so sánh
                 })));
@@ -35,12 +35,44 @@ export default function ManagerDonHang() {
     };
 
     const handleStatusChange = (index, newStatus) => {
-        const updated = [...orders];
+        const updated = [...orders]; //tạo mảng mới chuwasa các phần tử order 
         updated[index].status = newStatus;
         setOrders(updated);
     };
+    const handleViewOrder = (orderId) => {
+        navigate(`/admin/dashboard/order/${orderId}`);
+    };
+    const handleCancelOrder = async (orderId, index) => {
+        const reason = prompt("Nhập lý do hủy đơn:");
+        if (!reason) return;
 
+        const token = await ensureTokenValid();
+        if (!token) return;
 
+        try {
+            const result = await CancelOrderAdmin(orderId, reason, token)
+            if (!result.isSuccess) {
+                alert(result.message || "Hủy đơn thất bại.");
+                return;
+            }
+
+            alert(result.message);
+
+            setOrders(prev => {
+                const updated = [...prev];
+                updated[index] = {
+                    ...updated[index],
+                    status: result.data.status,
+                    originalStatus: result.data.status,
+
+                };
+                return updated;
+            });
+        } catch (err) {
+            console.error(err);
+            alert("Hủy đơn thất bại.");
+        }
+    };
     const handleUpdateStatus = async (orderId, newStatus, originalStatus, index) => {
 
         if (newStatus === originalStatus) {
@@ -91,14 +123,11 @@ export default function ManagerDonHang() {
     const getNextValidStatuses = (currentStatus) => {
         switch (currentStatus) {
             case "Pending":
-                return ["Confirm", "Canceled"];
+                return ["Confirm"];
             case "Confirm":
-                return ["Shipping", "Canceled"];
-            // case "Shipping":
-            //     return ["Delivery"];
+                return ["Shipping"];
             case "Shipping":
                 return []; // Admin KHÔNG được phép chuyển tiếp
-
             default:
                 return [];
         }
@@ -120,7 +149,7 @@ export default function ManagerDonHang() {
                 <thead>
                     <tr>
                         <th>Mã đơn</th>
-                        <th>Thông tin KH</th>
+                        <th>Email KH</th>
                         <th>Ngày đặt</th>
                         <th>Tổng tiền</th>
                         <th>Thanh toán</th>
@@ -136,12 +165,12 @@ export default function ManagerDonHang() {
                         orders.map((item, index) => (
                             <tr key={item.orderId}>
                                 <td>{item.orderId}</td>
-                                <td>{item.information}</td>
+                                <td>{item.email}</td>
                                 <td>{new Date(item.orderDat).toLocaleDateString("vi-VN")}</td>
                                 <td>{item.totalAmount.toLocaleString("vi-VN")}₫</td>
                                 <td>{item.paymentStatus}</td>
                                 <td>
-                                    {["Delivery", "Canceled"].includes(item.status) ? (
+                                    {["Delivery", "Canceled"].includes(item.status) ? ( // itemn.status là 1 trogn 2 cái kia 
                                         <span className={`badge ${item.status === "Delivery" ? "bg-success" : "bg-danger"}`}>
                                             {statusMap[item.status]}
                                         </span>
@@ -168,8 +197,21 @@ export default function ManagerDonHang() {
 
                                 <td>{item.note}</td>
                                 <td>
-                                    <button className="btn btn-sm btn-primary me-1">🔍</button>
-                                    <button className="btn btn-sm btn-danger me-1">🗑️</button>
+                                    <button
+                                        className="btn btn-sm btn-primary me-1"
+                                        onClick={() => handleViewOrder(item.orderId)}
+                                    >
+                                        🔍Xem
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-danger me-1"
+                                        onClick={() => handleCancelOrder(item.orderId, index)}
+                                        disabled={!["Pending", "Confirm"].includes(item.status)} // chỉ cho hủy Pending và Confirm
+                                    >
+                                        🗑️Hủy Đơn
+                                    </button>
+
+
                                     {["Delivery", "Canceled"].includes(item.status) ? null : (
                                         <button
                                             className="btn btn-sm btn-outline-success"

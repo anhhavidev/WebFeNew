@@ -3,17 +3,33 @@ import { Link } from "react-router-dom";
 import { OrderApi } from "../../Service/OrderAPI"
 import UserLayout from "../../layout1/UserLayout";
 import CountdownTimer from "../../utils/CountdownTimer"; // hoặc đúng đường dẫn bạn lưu
-
+import useAuth from "../../Hooks/useAuth"; // hoặc đúng đường dẫn file bạn lưu
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const { ensureTokenValid } = useAuth(); // ✅ lấy hàm từ hook
   const [pageNumber, setPageNumber] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(8);
+      function getStatusText(status) {
+    switch (status) {
+      case "Pending":
+        return "Chờ xác nhận";
+      case "Confirm":
+        return "Đã xác nhận";
+      case "Shipping":
+        return "Đang giao hàng";
+      case "Delivery":
+        return "Đã Giao";
+      case "Canceled":
+        return "Đã hủy";
+      default:
+        return status;
+    }
+  }
   useEffect(() => {
     async function fetchOrders() {
       try {
@@ -33,17 +49,25 @@ export default function MyOrdersPage() {
     if (!window.confirm("Bạn chắc chắn đã nhận được hàng?")) return;
 
     try {
-      const res = await fetch(`/api/Order/user-confirm/${orderId}`, {
+      const token = await ensureTokenValid();
+      if (!token) return;
+
+      const res = await fetch(`http://localhost:5230/api/Order/user-confirm/${orderId}`, {
         method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       });
 
       const data = await res.json();
-      if (res.ok) {
+       if (data.isSuccess) {
         alert("Cảm ơn bạn đã xác nhận!");
-        // reload lại đơn hàng
         setOrders((prev) =>
           prev.map((o) =>
-            o.orderId === orderId ? { ...o, status: "Delivery" } : o
+            o.orderId === orderId
+              ? { ...o, status: data.data.status, paymentStatus: data.data.paymentStatus }
+              : o
           )
         );
       } else {
@@ -53,33 +77,35 @@ export default function MyOrdersPage() {
       alert("Lỗi kết nối máy chủ");
     }
   }
+
   async function handleCancelOrder(orderId) {
     if (!window.confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
 
     try {
-      const res = await fetch(`/api/Order/cancel/${orderId}`, {
+      const token = await ensureTokenValid();
+      if (!token) return;
+
+      const res = await fetch(`http://localhost:5230/api/Order/cancel/${orderId}`, {
         method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       });
 
       const data = await res.json();
-      if (res.ok) {
+      
+      if (data.isSuccess) {
         alert("Đã huỷ đơn hàng");
-
         setOrders((prev) =>
           prev.map((o) =>
             o.orderId === orderId
-              ? {
-                ...o,
-                status: "Cancelled",
-                paymentStatus: o.paymentStatus === "Paid"
-                  ? o.paymentStatus
-                  : "Failed",
-              }
+              ? { ...o, status: data.data.status, paymentStatus: data.data.paymentStatus }
               : o
           )
         );
       } else {
-        alert(data.message || "Không thể huỷ đơn");
+        alert(data.data.message || "Không thể huỷ đơn");
       }
     } catch (err) {
       alert("Lỗi kết nối máy chủ");
@@ -87,11 +113,12 @@ export default function MyOrdersPage() {
   }
 
 
+
   useEffect(() => {
     if (selectedStatus === "all") {
       setFilteredOrders(orders);
     } else {
-      setFilteredOrders(orders.filter(o => o.orderStatus === selectedStatus));
+      setFilteredOrders(orders.filter(o => o.status === selectedStatus));
     }
   }, [selectedStatus, orders]);
 
@@ -110,10 +137,12 @@ export default function MyOrdersPage() {
           >
             <option value="all">Tất cả</option>
             <option value="Pending">Chờ xác nhận</option>
+            <option value="Confirm">Đang xử lý</option>
             <option value="Shipping">Đang giao</option>
-            <option value="Completed">Đã giao</option>
-            <option value="Cancelled">Đã hủy</option>
+            <option value="Delivery">Đã giao</option>
+            <option value="Canceled">Đã hủy</option>
           </select>
+
         </div>
 
         {loading && <div className="alert alert-info">Đang tải...</div>}
@@ -141,7 +170,7 @@ export default function MyOrdersPage() {
                   <td>#{order.orderId}</td>
                   <td>{new Date(order.orderDat).toLocaleDateString("vi-VN")}</td>
                   <td>{order.totalAmount.toLocaleString()}đ</td>
-                  <td>{order.status}</td>
+                  <td>{getStatusText(order.status)}</td>
                   <td>{order.paymentMethod}</td>
                   <td>
                     {order.paymentStatus === "Paid"
@@ -168,7 +197,16 @@ export default function MyOrdersPage() {
                           Huỷ đơn
                         </button>
                       )}
-                      {order.paymentStatus !== "Paid" && order.status === "Pending" && order.paymentMethod ==="VnPay"  ? (
+                      {order.status === "Shipping" && (
+                        <button
+                          className="btn btn-sm btn-success"
+                          onClick={() => handleConfirmDelivery(order.orderId)}
+                        >
+                          Đã nhận hàng
+                        </button>
+                      )}
+
+                      {order.paymentStatus !== "Paid" && order.status === "Pending" && order.paymentMethod === "VnPay" ? (
                         <div className="text-center">
                           <Link to={`/payment/retry/${order.orderId}`} className="btn btn-sm btn-primary mb-1">
                             Thanh toán lại
@@ -182,7 +220,7 @@ export default function MyOrdersPage() {
                                       o.orderId === order.orderId
                                         ? {
                                           ...o,
-                                          status: "Cancelled",
+                                          status: "Canceled",
                                           paymentStatus: "Failed",
                                         }
                                         : o
@@ -195,9 +233,10 @@ export default function MyOrdersPage() {
                         </div>
                       ) : (
                         <>
-                          {order.status === "Cancelled" && (
+                          {order.status === "Canceled" && (
                             <span className="btn badge bg-danger">Đã hủy</span>
                           )}
+
                         </>
                       )}
 

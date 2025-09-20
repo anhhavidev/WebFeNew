@@ -70,18 +70,49 @@ export async function getProductsByCategory(categoryId) {
 // Thêm sản phẩm (POST)
 export async function addProduct(product) {
   try {
-    const response = await fetch(`${API_URL}`, {
+    const formData = new FormData();
+
+    formData.append("Name", product.name);
+    formData.append("Description", product.description);
+    if (product.image) {
+      formData.append("Image", product.image);
+    }
+    formData.append("CategoryId", product.categoryId);
+    formData.append("StockQuantity", product.stockQuantity);
+    formData.append("OriginalPrice", product.originalPrice);
+    formData.append("DiscountPercent", product.discountPercent ?? "");
+    formData.append("IsActive", product.isActive);
+    formData.append("Weight", product.weight);
+
+    if (product.imageGallery && product.imageGallery.length > 0) {
+      for (let file of product.imageGallery) {
+        formData.append("ImageGallery", file);
+      }
+    }
+
+    for (let [k, v] of formData.entries()) {
+      console.log(k, v);
+    }
+
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${API_URL}/add`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(product),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
     });
+
     if (!response.ok) throw new Error("Thêm sản phẩm thất bại");
     return await response.json();
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi trong addProduct:", error);
     throw error;
   }
 }
+
+
+
 // Thêm sản phẩm có ảnh
 export async function addProductWithImage(product) {
   try {
@@ -112,25 +143,58 @@ export async function addProductWithImage(product) {
 
 // Sửa sản phẩm (PUT)
 export async function updateProduct(id, product) {
+  const formData = new FormData();
+
+  formData.append("Name", product.name);
+  formData.append("Description", product.description);
+  formData.append("CategoryId", product.categoryId);
+  formData.append("StockQuantity", product.stockQuantity);
+  formData.append("OriginalPrice", product.originalPrice);
+  formData.append("DiscountPercent", product.discountPercent ?? "");
+  formData.append("IsActive", product.isActive);
+  formData.append("Weight", product.weight);
+
+  if (product.image) formData.append("Image", product.image);
+  if (product.imageGallery && product.imageGallery.length > 0) {
+    product.imageGallery.forEach((file) => formData.append("ImageGallery", file));
+  }
+
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${API_URL}/update/${id}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!response.ok) throw new Error("Cập nhật sản phẩm thất bại");
+  return await response.json();
+}
+
+export async function getProductById(id) {
   try {
+    const token = localStorage.getItem("token");
     const response = await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(product),
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
     });
-    if (!response.ok) throw new Error("Cập nhật sản phẩm thất bại");
+    if (!response.ok) throw new Error("Lỗi API lấy chi tiết sản phẩm");
     return await response.json();
   } catch (error) {
-    console.error(error);
+    console.error("getProductById error:", error);
     throw error;
   }
 }
 
 // Xóa sản phẩm (DELETE)
+// Xóa sản phẩm (DELETE)
 export async function deleteProduct(id) {
   try {
     const response = await fetch(`${API_URL}/${id}`, {
       method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`, // ✅ thêm nếu API có Authorize
+      },
     });
     if (!response.ok) throw new Error("Xóa sản phẩm thất bại");
     return await response.json();

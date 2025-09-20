@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-
-const ProductForm = ({ categories, product, onSave, onCancel }) => {
+import { getProductById } from "../../Service/ProductApi";
+const ProductForm = ({ categories, productId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -16,28 +16,43 @@ const ProductForm = ({ categories, product, onSave, onCancel }) => {
   });
 
   const [preview, setPreview] = useState(null);
+  const [galleryPreview, setGalleryPreview] = useState([]);
 
   useEffect(() => {
-    if (product) {
-      const discount = product.discountPercent || 0;
-      const originalPrice = product.originalPrice || 0;
-      setFormData({
-        name: product.name || "",
-        description: product.description || "",
-        originalPrice,
-        discountPercent: discount,
-        discountedPrice: originalPrice - (originalPrice * discount) / 100,
-        stockQuantity: product.stockQuantity || "",
-        categoryId: product.categoryId || "",
-        isActive: product.isActive ?? true,
-        weight: product.weight || "",
-        image: null,
-        imageGallery: []
-      });
+    if (productId) {
+      const fetchProduct = async () => {
+        try {
+          const data = await getProductById(productId);
+          const discount = data.discountPercent || 0;
+          const originalPrice = data.originalPrice || 0;
 
-      if (product.imageUrl) setPreview(product.imageUrl);
+          setFormData({
+            productId: data.productId,
+            name: data.name || "",
+            description: data.description || "",
+            originalPrice,
+            discountPercent: discount,
+            discountedPrice: originalPrice - (originalPrice * discount) / 100,
+            stockQuantity: data.stockQuantity || "",
+            categoryId: data.categoryId || "",
+            isActive: data.isActive ?? true,
+            weight: data.weight || "",
+            image: data.linkImage || null,
+            imageGallery: [] // để file mới upload
+          });
+
+          if (data.linkImage) setPreview(data.linkImage);
+
+          if (data.imageGallery) setGalleryPreview(data.imageGallery); // gallery URL cũ
+        } catch (error) {
+          console.error("Lỗi khi load chi tiết sản phẩm:", error);
+        }
+      };
+
+      fetchProduct();
     }
-  }, [product]);
+  }, [productId]);
+
   const formatCurrency = (value) => {
     if (!value) return "";
     // chuyển string -> number
@@ -87,33 +102,44 @@ const ProductForm = ({ categories, product, onSave, onCancel }) => {
     if (file) setPreview(URL.createObjectURL(file));
   };
 
+
+  // const handleGalleryChange = (e) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     imageGallery: Array.from(e.target.files)
+  //   }));
+  // };
   const handleGalleryChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      imageGallery: Array.from(e.target.files)
-    }));
+    const files = Array.from(e.target.files);
+    setFormData(prev => ({ ...prev, imageGallery: files }));
+    setGalleryPreview(files.map(f => URL.createObjectURL(f))); // preview file mới
   };
 
   const handleSubmit = (e) => {
+    // e.preventDefault();
+    // const payload = new FormData();
+
+    // payload.append("Name", formData.name);
+    // payload.append("Description", formData.description);
+    // payload.append("OriginalPrice", formData.originalPrice);
+    // if (formData.discountPercent) {
+    //   payload.append("DiscountPercent", formData.discountPercent);
+    // }
+    // payload.append("StockQuantity", formData.stockQuantity);
+    // payload.append("CategoryId", formData.categoryId);
+    // payload.append("IsActive", formData.isActive);
+    // payload.append("Weight", formData.weight);
+    // if (formData.image) payload.append("Image", formData.image);
+    // if (formData.imageGallery && formData.imageGallery.length > 0) {
+    //   formData.imageGallery.forEach((file) => payload.append("ImageGallery", file));
+    // }
+
+    // onSave(payload);
     e.preventDefault();
-    const payload = new FormData();
-
-    payload.append("Name", formData.name);
-    payload.append("Description", formData.description);
-    payload.append("OriginalPrice", formData.originalPrice);
-    if (formData.discountPercent) {
-      payload.append("DiscountPercent", formData.discountPercent);
-    }
-    payload.append("StockQuantity", formData.stockQuantity);
-    payload.append("CategoryId", formData.categoryId);
-    payload.append("IsActive", formData.isActive);
-    payload.append("Weight", formData.weight);
-    if (formData.image) payload.append("Image", formData.image);
-    if (formData.imageGallery && formData.imageGallery.length > 0) {
-      formData.imageGallery.forEach((file) => payload.append("ImageGallery", file));
-    }
-
-    onSave(payload);
+    // onSave(formData); // truyền object chứ không phải FormData
+    const payload = { ...formData };
+  if (!productId) delete payload.productId;
+  onSave(payload);
   };
 
   return (
@@ -240,7 +266,14 @@ const ProductForm = ({ categories, product, onSave, onCancel }) => {
           onChange={handleFileChange}
           accept="image/*"
         />
-        {preview && <img src={preview} alt="Preview" style={{ width: "100px", marginTop: "10px" }} />}
+        {/* Nếu có ảnh cũ từ DB hoặc ảnh mới chọn */}
+        {(preview || formData.image) && (
+          <img
+            src={preview || formData.image}
+            alt="Preview"
+            style={{ width: "100px", marginTop: "10px" }}
+          />
+        )}
       </div>
 
       <div className="mb-3">
@@ -253,14 +286,24 @@ const ProductForm = ({ categories, product, onSave, onCancel }) => {
           accept="image/*"
           multiple
         />
+
+        {/* Hiển thị preview */}
+        {galleryPreview.length > 0 && (
+          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+            {galleryPreview.map((url, idx) => (
+              <img key={idx} src={url} alt={`Gallery ${idx}`} style={{ width: "100px" }} />
+            ))}
+          </div>
+        )}
       </div>
+
 
       <div className="d-flex justify-content-end gap-2">
         <button type="button" className="btn btn-secondary" onClick={onCancel}>
           Hủy
         </button>
         <button type="submit" className="btn btn-primary">
-          {product ? "Cập nhật" : "Thêm mới"}
+          {productId ? "Cập nhật" : "Thêm mới"}
         </button>
       </div>
     </form>

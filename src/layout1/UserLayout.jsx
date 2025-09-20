@@ -95,8 +95,14 @@ export default function UserLayout({ children }) {
                 {showDropdown && (
                   <ul className={styles.dropdownmenu}>
                     <li>
-                      <button className={styles.dropdownItem} onClick={() => navigate("/getinfor")}>
-                        Thông tin tài khoản
+                      <button
+                        className={styles.dropdownItem}
+                        onClick={() => {
+                          navigate("/getinfor");
+                          setShowDropdown(false); // 👈 đóng menu sau khi click
+                        }}
+                      >
+                        👤 Thông tin tài khoản
                       </button>
                     </li>
                     <li>

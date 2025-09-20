@@ -81,7 +81,7 @@ export default function useAuth() {
       const response = await fetch("http://localhost:5230/api/Acount/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, method: "normal" }), // thêm đây 
       });
 
       if (!response.ok) {

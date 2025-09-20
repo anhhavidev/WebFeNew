@@ -58,10 +58,10 @@ const Login = () => {
     onSuccess: async (tokenResponse) => {
       try {
         // Gửi token.id_token về backend để xử lý
-        const res = await fetch("http://localhost:5230/api/Acount/google-login", {
+        const res = await fetch("http://localhost:5230/api/Acount/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ IdToken: tokenResponse.credential }), // credential = id_token
+          body: JSON.stringify({ IdToken: tokenResponse.credential , method: "google"}), // credential = id_token
         });
         console.log("Google response:", tokenResponse);
 

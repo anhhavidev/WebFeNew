@@ -6,7 +6,7 @@ import UserLayout from "../../layout1/UserLayout";
 import { getCartItems } from "../../Service/cartApi";
 import { getProvinces, getDistricts, getWards } from "../../Service/locationApi";
 import { calculateShipping } from "../../Service/shippingApi";
-
+import { useLocation } from "react-router-dom";
 import { DeleteAddress, UpdateAddress } from "../../Service/addressApi"
 import { useParams, useNavigate } from "react-router-dom";
 import { createPaymentUrl } from "../../Service/paymentApi";
@@ -30,6 +30,9 @@ export default function SimpleCheckoutPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+
+const location = useLocation();
+const selectedItems = location.state?.selectedItems || [];
   const handlePayment = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -158,10 +161,24 @@ export default function SimpleCheckoutPage() {
   useEffect(() => {
     const fetchData = async () => {
       await fetchAddresses();
-      await fetchCartItems();
+     //await fetchCartItems();
     };
     fetchData();
   }, [token]);
+  useEffect(() => {
+  if (selectedItems.length > 0) {
+    // ✅ Đồng bộ lại field để code cũ tính toán được
+    setCartItems(selectedItems.map(item => ({
+      ...item,
+      soLuong: item.quantity,   // alias để giữ chung format
+      donGia: item.unitPrice,
+    })));
+  } else {
+    // ✅ Vào trực tiếp checkout thì load full cart
+    fetchCartItems();
+  }
+}, [selectedItems]);
+
   ///ca;l; api dia chi 
   async function fetchAddresses() {
     const res = await GetAllUserAddresses(token);
@@ -193,7 +210,8 @@ export default function SimpleCheckoutPage() {
       paymentMethod: method,
       note,
 
-      items: cartItems,
+      // items: cartItems,
+      productIds: cartItems.map(item => item.cartItemId),
     };
 
     try {
@@ -457,7 +475,7 @@ export default function SimpleCheckoutPage() {
               <ul className={styles.cartItemList}>
                 {cartItems.map((item, index) => (
                   <li key={index} className={styles.cartItem}>
-                    <img src={item.linkImage} alt={item.productName} className={styles.cartItemImage} />
+                    <img src={item.productImage} alt={item.productName} className={styles.cartItemImage} />
                     <div>
                       <div><strong>{item.productName}</strong></div>
                       <div>Đơn giá: {item.donGia.toLocaleString()} đ</div>

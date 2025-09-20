@@ -110,30 +110,36 @@ const GoogleOneTap = () => {
       const id_token = response.credential;
 
       try {
-        const res = await fetch("http://localhost:5230/api/Acount/google-login", {
+        // const res = await fetch("http://localhost:5230/api/Acount/google-login", {
+        //   method: "POST",
+        //   headers: { "Content-Type": "application/json" },
+        //   body: JSON.stringify({ IdToken: id_token }),
+        // });
+        const res = await fetch("http://localhost:5230/api/Acount/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ IdToken: id_token }),
+          body: JSON.stringify({ GoogleIdToken: id_token, Method: "google" })
+
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          localStorage.setItem("token", data.accessToken);
-          localStorage.setItem("refreshToken", data.refreshToken);
+          localStorage.setItem("token", data.data.accessToken);
+          localStorage.setItem("refreshToken", data.data.refreshToken);
 
-          await getProfile(data.accessToken);
+          await getProfile(data.data.accessToken); // .data 
 
-          const decoded = jwtDecode(data.accessToken);
+          const decoded = jwtDecode(data.data.accessToken);
           const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
           const localCart = getLocalCart();
           if (localCart.length > 0) {
-            await syncCartToServer(localCart, data.accessToken);
+            await syncCartToServer(localCart, data.data.accessToken);
             clearLocalCart();
           }
 
-          const cartResult = await getCartItems(data.accessToken);
+          const cartResult = await getCartItems(data.data.accessToken);
           if (cartResult?.data?.cartItems) {
             const totalQuantity = cartResult.data.cartItems.reduce(
               (sum, item) => sum + item.SoLuong,
