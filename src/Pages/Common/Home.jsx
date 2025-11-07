@@ -47,6 +47,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { user, ensureTokenValid } = useAuth();
   const { setCartCount } = useCart(); // ✅
+  const [alert, setAlert] = useState({ message: "", type: "", visible: false, fading: false });
 
   const pageNumber = parseInt(searchParams.get("page")) || 1;
   const pageSize = parseInt(searchParams.get("pageSize")) || 12;
@@ -117,6 +118,19 @@ export default function Home() {
     setMinPriceInput("");
     setMaxPriceInput("");
   };
+  // 🧩 Hàm hiển thị alert có hiệu ứng mờ dần
+ const showAlert = (message, type = "success", duration = 3000) => {
+  console.log("🔔 showAlert được gọi với:", message, type);
+  setAlert({ message, type, visible: true, fading: false });
+
+  setTimeout(() => {
+    setAlert((prev) => ({ ...prev, fading: true }));
+  }, duration - 500);
+
+  setTimeout(() => {
+    setAlert((prev) => ({ ...prev, visible: false, fading: false }));
+  }, duration);
+};
 
   const handleAddToCart = async (product) => {
     // 👉 nó sẽ dừng ở đây khi bạn click
@@ -127,7 +141,8 @@ export default function Home() {
         });
         setSelectedProduct(product);
         setShowModal(true);
-        return;
+        showAlert("✅ Thêm vào giỏ hàng thành công!", "success");
+
       }
 
       const token = await ensureTokenValid();
@@ -139,6 +154,7 @@ export default function Home() {
       // 👇 Dừng ở đây để kiểm tra token, product
       //debugger;
       const result = await addProductToCart(product.productId, 1, token);
+      console.log(result.message)
       if (result.isSuccess) {
         // ✅ GỌI LẠI API để lấy số lượng giỏ hàng thực sự từ server
         const res = await getCartItems(token);
@@ -148,18 +164,20 @@ export default function Home() {
         );
         setCartCount(totalQuantity || 0);
 
-         setSelectedProduct(product);
+        setSelectedProduct(product);
         // **Thay đổi selectedProduct để lấy giá đã tính sẵn từ BE**
         // setSelectedProduct({ // sửa 
         //   ...product,
         //   donGia: result.data.donGia ?? product.originalPrice
         // });
         setShowModal(true);
+        showAlert("✅ Thêm vào giỏ hàng thành công!", "success");
       } else {
-        alert(result.message || "Thêm vào giỏ hàng thất bại.");
+        alert("Hết hàng rồi ")
+
       }
     } catch (error) {
-      alert(error.message || "Thêm vào giỏ hàng thất bại.");
+      showAlert(error.message || "❌ Có lỗi khi thêm vào giỏ hàng.", "danger");
     }
   };
 
@@ -185,6 +203,26 @@ export default function Home() {
 
   return (
     <UserLayout>
+      {/* ✅ Alert Bootstrap nổi bật */}
+      {alert.visible && (
+        <div
+          className={`alert alert-${alert.type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg rounded-pill px-4 py-2 text-center ${alert.fading ? "opacity-0 transition-opacity" : "opacity-100"} `}
+          role="alert"
+          style={{
+            zIndex: 9999,
+            minWidth: "360px",
+            maxWidth: "500px",
+            transition: "opacity 0.5s ease-in-out",
+          }}
+        >
+          {alert.message}
+          <button
+            type="button"
+            className="btn-close ms-2"
+            onClick={() => setAlert({ ...alert, visible: false })}
+          ></button>
+        </div>
+      )}
       {/* Slider */}
       <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
         <Slider {...sliderSettings} className="custom-slider" dotsClass="slick-dots">

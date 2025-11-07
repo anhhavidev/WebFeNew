@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
-  getPaginatedProductAdmin,
+  getPaginatedProducSeller,
   deleteProduct,
   getCategories,
-  addProduct, updateProduct, toggleProductStatus
+  addProduct, updateProduct , getProductById
 } from "../Service/ProductApi";
-import "./ProductManagement.css";
-import ProductForm from "./Helpper/ProductForm";
-const ProductManagement = () => {
+import "../Admin/ProductManagement.css";
+import ProductForm from "../Admin/Helpper/ProductForm";
+const ProductManagerSeller = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +87,9 @@ const ProductManagement = () => {
   const [pageNumber, setPageIndex] = useState(1);
   const [pageSize] = useState(8);
   const [totalPages, setTotalPages] = useState(1);
+  //detail
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -116,25 +119,13 @@ const ProductManagement = () => {
 
       //'http://localhost:5230/api/Product/paging?pageIndex=1&pageSize=8'
 
-      const productData = await getPaginatedProductAdmin(filter);
+      const productData = await getPaginatedProducSeller(filter);
       setProducts(productData.items || []);
       setTotalPages(productData.totalPages || 1); // giả sử BE trả về totalPages
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
     } finally {
       setLoading(false);
-    }
-  };
-  const handleToggleStatus = async (id) => {
-    if (window.confirm("Bạn có chắc muốn ẩn hoặc bật sản phẩm này không?")) {
-      try {
-        const result = await toggleProductStatus(id);
-        alert(result.message); // ví dụ: "Sản phẩm đã bị ẩn thành công"
-        fetchData(); // tải lại danh sách
-      } catch (error) {
-        console.error("Lỗi ẩn/bật sản phẩm:", error);
-        alert("Không thể thay đổi trạng thái sản phẩm");
-      }
     }
   };
 
@@ -150,6 +141,16 @@ const ProductManagement = () => {
   };
 
   if (loading) return <div className="p-3">Đang tải sản phẩm...</div>;
+  const handleView = async (id) => {
+    try {
+      const data = await getProductById(id);
+      setSelectedProduct(data);
+      setShowViewModal(true);
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi lấy chi tiết sản phẩm");
+    }
+  };
 
   return (
     <div className="p-3">
@@ -244,8 +245,7 @@ const ProductManagement = () => {
             <th>Giá gốc </th>
             <th>Giá KM </th>
             <th>% Giảm</th>
-            <th>Tên cửa hàng </th>
-            <th>Tên Loại Sản phẩm</th>
+
             <th>Tồn kho</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
@@ -289,8 +289,7 @@ const ProductManagement = () => {
                     </span>
                   )}
                 </td>
-                <td>{p.sellerName}</td>
-                <td>{p.categoryName}</td>
+
                 <td>
                   {p.disCountPrice < p.originalPrice
                     ? `${p.discountPercent}%`
@@ -320,24 +319,24 @@ const ProductManagement = () => {
                   {/* Xem */}
                   <button
                     className="btn btn-sm btn-info me-2"
-                    onClick={() => alert(`Xem chi tiết: ${p.name}`)}
+                    onClick={() => handleView(p.productId)}
                   >
                     <i className="bi bi-eye"></i>
                   </button>
-                  {/* 🔹 Nút ẩn / bật lại sản phẩm */}
+
+                  {/* Sửa */}
                   <button
-                    className={`btn btn-sm ${p.isActive ? "btn-outline-danger" : "btn-outline-success"}`}
-                    onClick={() => handleToggleStatus(p.productId)}
+                    className="btn btn-sm btn-warning me-2"
+                    onClick={() => handleEdit(p)}
                   >
-                    {p.isActive ? (
-                      <>
-                        <i className="bi bi-eye-slash"></i> Ẩn
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-eye"></i> Bật lại
-                      </>
-                    )}
+                    <i className="bi bi-pencil"></i>
+                  </button>
+                  {/* Xoá */}
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDelete(p.productId)}
+                  >
+                    <i className="bi bi-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -351,6 +350,53 @@ const ProductManagement = () => {
           )}
         </tbody>
       </table>
+      {showViewModal && selectedProduct && (
+  <div className="modal fade show d-block" tabIndex="-1">
+    <div className="modal-dialog modal-lg">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Chi tiết sản phẩm: {selectedProduct.name}</h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setShowViewModal(false)}
+          ></button>
+        </div>
+        <div className="modal-body">
+          <div className="row">
+            <div className="col-md-4">
+              <img
+                src={selectedProduct.linkImage}
+                alt={selectedProduct.name}
+                className="img-fluid rounded"
+              />
+            </div>
+            <div className="col-md-8">
+              <p><strong>Tên sản phẩm:</strong> {selectedProduct.name}</p>
+              <p><strong>Danh mục:</strong> {selectedProduct.categoryName}</p>
+              <p><strong>Mô tả:</strong> {selectedProduct.description}</p>
+              <p><strong>Giá gốc:</strong> {selectedProduct.originalPrice.toLocaleString()} đ</p>
+              <p><strong>Giảm giá:</strong> {selectedProduct.discountPercent}%</p>
+              <p><strong>Tồn kho:</strong> {selectedProduct.stockQuantity}</p>
+              <p><strong>Trạng thái:</strong> {selectedProduct.isActive ? "Hoạt động" : "Ngưng hoạt động"}</p>
+              <p><strong>Đã bán:</strong> {selectedProduct.totalPurchased}</p>
+              <p><strong>Trọng lượng:</strong> {selectedProduct.weight} kg</p>
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowViewModal(false)}
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       {/* Pagination */}
       <nav>
         <ul className="pagination justify-content-center">
@@ -421,4 +467,4 @@ const ProductManagement = () => {
   );
 };
 
-export default ProductManagement;
+export default ProductManagerSeller;

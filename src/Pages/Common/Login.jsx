@@ -24,7 +24,7 @@ const Login = () => {
     // debugger
     e.preventDefault();
     const result = await login(email, password);
-
+    
     if (result.success) {
       const token = result.token;
       const localCart = getLocalCart();
@@ -48,7 +48,19 @@ const Login = () => {
       }
 
       // Điều hướng
-      navigate(result.role === "Admin" ? "/admin/dashboard" : "/");
+      // navigate(result.role === "Admin" ? "/admin/dashboard" : "/");
+      // Điều hướng
+      if (result.role === "Admin") {
+        navigate("/admin/dashboard");
+      } else if (result.role === "Shipper") {
+        navigate("/shipper/dashboard");
+      }
+        else if (result.role === "Seller") {
+        navigate("/seller/dashboard");
+      } else {
+        navigate("/"); // Customer hoặc role khác
+      }
+
     } else {
       setError(result.message);
     }
@@ -61,7 +73,7 @@ const Login = () => {
         const res = await fetch("http://localhost:5230/api/Acount/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ IdToken: tokenResponse.credential , method: "google"}), // credential = id_token
+          body: JSON.stringify({ IdToken: tokenResponse.credential, method: "google" }), // credential = id_token
         });
         console.log("Google response:", tokenResponse);
 
@@ -90,7 +102,15 @@ const Login = () => {
             setCartCount(totalQuantity);
           }
 
-          navigate(role === "Admin" ? "/admin/dashboard" : "/");
+          // navigate(role === "Admin" ? "/admin/dashboard" : "/");
+          if (role === "Admin") {
+            navigate("/admin/dashboard");
+          } else if (role === "Shipper") {
+            navigate("/shipper/dashboard/orders");
+          } else {
+            navigate("/");
+          }
+
         } else {
           setError(data.message || "Đăng nhập Google thất bại");
         }

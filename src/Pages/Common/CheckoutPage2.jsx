@@ -5,7 +5,7 @@ import styles from "./CheckoutPage.module.css";
 import UserLayout from "../../layout1/UserLayout";
 import { getCartItems } from "../../Service/cartApi";
 import { getProvinces, getDistricts, getWards } from "../../Service/locationApi";
-import { calculateShippingBySeller } from "../../Service/shippingApi";
+import { calculateShipping  } from "../../Service/shippingApi";
 import { useLocation } from "react-router-dom";
 import { DeleteAddress, UpdateAddress } from "../../Service/addressApi"
 import { useParams, useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ export default function SimpleCheckoutPage() {
   const [method, setMethod] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const [shippingFees, setShippingFees] = useState({});
+
 
   const location = useLocation();
   const selectedItems = location.state?.selectedItems || [];
@@ -64,19 +64,13 @@ export default function SimpleCheckoutPage() {
       groups[key] = {
         sellerId: key,
         storeName: item.storeName, // mỗi seller có cùng tên shop
-        items: [],
-         totalWeight: 0,  // ✅ thêm dòng này
+        items: []
       };
     }
     groups[key].items.push(item);
-      groups[key].totalWeight += (item.weight || 0) * item.soLuong; // ✅ tổng trọng lượng
     return groups;
   }, {});
-  // Tính tổng phí ship từ tất cả seller
-const totalShipping = Object.values(shippingFees).reduce(
-  (sum, fee) => sum + (fee?.shippingFee || 0),
-  0
-)
+
   // Chuyển object thành array
   const sellerGroupsArray = Object.values(sellerGroups);
   const total = cartItems.reduce((acc, item) => acc + item.soLuong * item.donGia, 0);
@@ -152,35 +146,32 @@ const totalShipping = Object.values(shippingFees).reduce(
 
 
     // 👉 Tính phí ship nếu đủ tỉnh và huyện
-
-
-
-
+    if (province && district) {
+      const res = await calculateShipping(
+        provinceMap[province],
+        districtMap[district],
+        token
+      );
+      if (res) {
+        setShippingInfo(res);
+        setShippingFee(`${res.shippingFee.toLocaleString()} đ`);
+      }
+    }
   };
   useEffect(() => {
     if (selectedAddress?.province && selectedAddress?.district) {
       const provinceName = provinceMap[selectedAddress.province] || selectedAddress.province;
       const districtName = districtMap[selectedAddress.district] || selectedAddress.district;
 
-      // ✅ gọi cho từng seller
-      const fetchShipping = async () => {
-        const newFees = {};
-        for (const group of sellerGroupsArray) {
-          const res = await calculateShippingBySeller(
-            group.sellerId,   // sellerId đúng
-            provinceName,
-            districtName,
-            token
-          );
+      calculateShipping(provinceName, districtName, token)
+        .then(res => {
           if (res) {
-            newFees[group.sellerId] = res; // key theo sellerId
+            setShippingInfo(res);
+            setShippingFee(`${res.shippingFee.toLocaleString()} đ`);
           }
-        }
-        setShippingFees(newFees);
-      };
-      fetchShipping();
+        });
     }
-  }, [selectedAddress, provinceMap, districtMap, cartItems]);
+  }, [selectedAddress, provinceMap, districtMap]);
   ////useeffect data 
   useEffect(() => {
     const fetchData = async () => {
@@ -196,13 +187,11 @@ const totalShipping = Object.values(shippingFees).reduce(
         ...item,
         soLuong: item.quantity,   // alias để giữ chung format
         donGia: item.unitPrice,
-        weight: item.weight   // 👉 copy weight lại
       })));
     } else {
       // ✅ Vào trực tiếp checkout thì load full cart
       fetchCartItems();
     }
-    console.log(selectedItems);
   }, [selectedItems]);
 
   ///ca;l; api dia chi 
@@ -508,13 +497,7 @@ const totalShipping = Object.values(shippingFees).reduce(
                   <h5 style={{ marginBottom: "12px", color: "#2c3e50" }}>
                     🏬 {group.storeName}
                   </h5>
-                  {shippingFees[group.sellerId] && (
-                    <div style={{ fontSize: "14px", color: "#555", marginBottom: "8px" }}>
-                      🚚 Phí ship: {shippingFees[group.sellerId].shippingFee.toLocaleString()} đ
-                      <br />
-                      Tổng trọng lượng: {group.totalWeight}g
-                    </div>
-                  )}
+
                   <div>
                     {group.items.map((item, index) => (
                       <div
@@ -564,12 +547,18 @@ const totalShipping = Object.values(shippingFees).reduce(
 
             <div className={styles.summarySection}>
               <h4>Tạm tính: {total.toLocaleString()} đ</h4>
-             
-              <h4>Vận chuyển tất cả: {totalShipping.toLocaleString()} đ</h4>
-              <h4>Đơn bị vận chuyển : GHTK</h4>
-              
+              <h4>Vận chuyển: {shippingInfo ? `${shippingInfo.shippingFee.toLocaleString()} đ` : shippingFee}</h4>
+              {shippingInfo && (
+                <div style={{ fontSize: 14, color: "#555" }}>
+                  <div>Tổng trọng lượng: {shippingInfo.totalWeight}g</div>
+                  <div>Số sản phẩm: {shippingInfo.totalItems}</div>
+                  <div>Đơn vị vận chuyển: {shippingInfo.shippingProvider}</div>
+                </div>
+              )}
+
+              <h4>Điểm tích lũy: {point.toLocaleString()}</h4>
               <h3 style={{ color: "red" }}>
-                Tiền phải trả: {(total + totalShipping).toLocaleString()} đ
+                Tiền phải trả: {(total + (shippingInfo?.shippingFee || 0)).toLocaleString()} đ
               </h3>
               <h5 className="text-center fw-bold text-primary mb-3">Phương thức thanh toán</h5>
 

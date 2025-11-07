@@ -8,6 +8,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,12 +20,18 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
+    if (!fullName.trim()) {
+      setError("Họ và tên không được để trống");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp");
       return;
     }
 
-    const result = await register(email, password, confirmPassword);
+    // Gọi API với payload đầy đủ
+    const result = await register({ email, password, confirmPassWord: confirmPassword, fullName });
     if (result.success) {
       alert("Đăng ký thành công!");
       navigate("/login");
@@ -39,6 +46,16 @@ const Register = () => {
         <h2 className={styles.title}>Đăng ký</h2>
         {error && <p style={{ color: "red" }}>{error}</p>}
         <form onSubmit={handleRegister}>
+          <div className={styles.inputGroup}>
+            <input
+              type="text"
+              placeholder="Họ và tên"
+              className={styles.input}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
           <div className={styles.inputGroup}>
             <input
               type="email"

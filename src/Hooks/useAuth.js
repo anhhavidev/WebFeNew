@@ -104,24 +104,24 @@ export default function useAuth() {
     }
   };
 
-  const register = async (email, password, confirmPassword) => {
-    try {
-      const response = await fetch("http://localhost:5230/api/Acount/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, confirmPassword }),
-      });
+  const register = async ({ email, password, confirmPassWord, fullName }) => {
+  try {
+    const response = await fetch("http://localhost:5230/api/Acount/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, confirmPassWord, fullName }),
+    });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Đăng ký thất bại");
-      }
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.message };
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Đăng ký thất bại");
     }
-  };
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
 
   const refreshAccessToken = async () => {
     if (isRefreshing) {

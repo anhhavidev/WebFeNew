@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from "./Navitation.module.css";
-import { getAllCategories } from "../Service/CateogryApi";
+import { getAllCategories } from "../Service/categoryApi";
 import { Link, useSearchParams } from "react-router-dom";
 
 export default function Navitation() {

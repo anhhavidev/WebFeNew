@@ -5,9 +5,9 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cartCount, setCartCount] = useState(0);
-
+  const [cartItems, setCartItems] = useState([]); // thêm moi 
   return (
-    <CartContext.Provider value={{ cartCount, setCartCount }}>
+    <CartContext.Provider value={{ cartCount, setCartCount, cartItems, setCartItems  }}> 
       {children}
     </CartContext.Provider>
   );

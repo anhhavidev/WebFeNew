@@ -6,7 +6,7 @@ import { useCart } from "./CartContext";
 
 export default function CartSyncAfterLogin() {
   const { user, ensureTokenValid } = useAuth();
-  const { setCartCount, setCartItems } = useCart();
+  const { setCartCount } = useCart();
 
   useEffect(() => {
     const syncCart = async () => {
@@ -27,15 +27,13 @@ export default function CartSyncAfterLogin() {
         }
       }
 
+      // ✅ Sau khi sync, lấy lại giỏ hàng và đếm tổng số lượng thực sự
       try {
         const result = await getCartItems(token);
-        if (result.success && result.data?.sellerGroups) {
-          setCartItems(result.data.sellerGroups); // Lưu luôn sellerGroups
-          const totalCount = result.data.sellerGroups.reduce(
-            (sum, seller) => sum + seller.cartItems.reduce((s, item) => s + item.soLuong, 0),
-            0
-          );
-          setCartCount(totalCount);
+        if (result.success && result.data?.cartItems) {
+          setCartCount(result.data.cartItems.length); // số dòng 
+          
+        
         }
       } catch (err) {
         console.error("❌ Không lấy được giỏ hàng sau sync:", err);

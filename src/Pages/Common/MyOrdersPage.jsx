@@ -14,18 +14,30 @@ export default function MyOrdersPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(8);
-      function getStatusText(status) {
+  function getStatusText(status) {
     switch (status) {
       case "Pending":
         return "Chờ xác nhận";
-      case "Confirm":
+      case "Confirmed":
         return "Đã xác nhận";
+      case "ReadyToShip":
+        return "Đang chờ Shipper lấy hàng ";
+      case "Assigned":
+        return "Shipper đã nhận hàng ";
       case "Shipping":
         return "Đang giao hàng";
-      case "Delivery":
-        return "Đã Giao";
-      case "Canceled":
+      case "Delivered":
+        return "Đã giao hàng";
+      case "Received":
+        return "Đã nhận hàng";
+      case "FailedDelivery":
+        return "Giao thất bại";
+      case "Cancelled":
         return "Đã hủy";
+      case "PartiallyReceived":
+        return "Một phần giao thành công ";
+      case "PartiallyCancelled":
+        return "Một phần giao thất bại ";
       default:
         return status;
     }
@@ -61,7 +73,7 @@ export default function MyOrdersPage() {
       });
 
       const data = await res.json();
-       if (data.isSuccess) {
+      if (data.isSuccess) {
         alert("Cảm ơn bạn đã xác nhận!");
         setOrders((prev) =>
           prev.map((o) =>
@@ -94,18 +106,18 @@ export default function MyOrdersPage() {
       });
 
       const data = await res.json();
-      
+
       if (data.isSuccess) {
         alert("Đã huỷ đơn hàng");
         setOrders((prev) =>
           prev.map((o) =>
-            o.orderId === orderId
+            o.parentOrderId === orderId
               ? { ...o, status: data.data.status, paymentStatus: data.data.paymentStatus }
               : o
           )
         );
       } else {
-        alert(data.data.message || "Không thể huỷ đơn");
+        alert(data.message || "Không thể huỷ đơn");
       }
     } catch (err) {
       alert("Lỗi kết nối máy chủ");
@@ -121,7 +133,24 @@ export default function MyOrdersPage() {
       setFilteredOrders(orders.filter(o => o.status === selectedStatus));
     }
   }, [selectedStatus, orders]);
+  function handleExpire(orderId) {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.parentOrderId === orderId
+          ? { ...o, status: "Cancelled", paymentStatus: "Failed" }
+          : o
+      )
+    );
 
+    // Nếu dùng filteredOrders để hiển thị, cũng cập nhật luôn:
+    setFilteredOrders((prev) =>
+      prev.map((o) =>
+        o.parentOrderId === orderId
+          ? { ...o, status: "Cancelled", paymentStatus: "Failed" }
+          : o
+      )
+    );
+  }
   return (
     <UserLayout>
       <div className="container mt-5">
@@ -137,10 +166,10 @@ export default function MyOrdersPage() {
           >
             <option value="all">Tất cả</option>
             <option value="Pending">Chờ xác nhận</option>
-            <option value="Confirm">Đang xử lý</option>
             <option value="Shipping">Đang giao</option>
-            <option value="Delivery">Đã giao</option>
-            <option value="Canceled">Đã hủy</option>
+            <option value="Confirmed">Đang xử lý</option>
+            <option value="Delivered">Đã giao</option>
+            <option value="Cancelled">Đã hủy</option>
           </select>
 
         </div>
@@ -159,7 +188,7 @@ export default function MyOrdersPage() {
                 <th>Ngày đặt</th>
                 <th>Tổng tiền</th>
                 <th>Trạng thái</th>
-                <th>Phương thức thanh toán  </th>
+
                 <th>Thanh toán</th>
                 <th>Hành động</th>
               </tr>
@@ -167,11 +196,11 @@ export default function MyOrdersPage() {
             <tbody>
               {filteredOrders.map((order) => (
                 <tr key={order.orderId}>
-                  <td>#{order.orderId}</td>
-                  <td>{new Date(order.orderDat).toLocaleDateString("vi-VN")}</td>
+                  <td>#{order.parentOrderId}</td>
+                  <td>{new Date(order.orderDate).toLocaleDateString("vi-VN")}</td>
                   <td>{order.totalAmount.toLocaleString()}đ</td>
                   <td>{getStatusText(order.status)}</td>
-                  <td>{order.paymentMethod}</td>
+
                   <td>
                     {order.paymentStatus === "Paid"
                       ? "Đã thanh toán"
@@ -184,7 +213,7 @@ export default function MyOrdersPage() {
                   <td>
                     <div className="d-flex justify-content-center gap-2">
                       <Link
-                        to={`/user/orders/${order.orderId}`}
+                        to={`/user/orders/${order.parentOrderId}`}
                         className="btn btn-sm btn-outline-secondary"
                       >
                         Xem chi tiết
@@ -192,48 +221,29 @@ export default function MyOrdersPage() {
                       {order.status === "Pending" && order.paymentStatus !== "Paid" && (
                         <button
                           className="btn btn-sm btn-danger"
-                          onClick={() => handleCancelOrder(order.orderId)}
+                          onClick={() => handleCancelOrder(order.parentOrderId)}
                         >
                           Huỷ đơn
                         </button>
                       )}
-                      {order.status === "Shipping" && (
-                        <button
-                          className="btn btn-sm btn-success"
-                          onClick={() => handleConfirmDelivery(order.orderId)}
-                        >
-                          Đã nhận hàng
-                        </button>
-                      )}
+
 
                       {order.paymentStatus !== "Paid" && order.status === "Pending" && order.paymentMethod === "VnPay" ? (
                         <div className="text-center">
-                          <Link to={`/payment/retry/${order.orderId}`} className="btn btn-sm btn-primary mb-1">
+                          <Link to={`/payment/retry/${order.parentOrderId}`} className="btn btn-sm btn-primary mb-1">
                             Thanh toán lại
                             <div style={{ fontSize: "0.85rem" }}>
                               Còn lại:{" "}
                               <CountdownTimer
                                 expireTime={order.orderExpireTime}
-                                onExpire={() => {
-                                  setOrders((prev) =>
-                                    prev.map((o) =>
-                                      o.orderId === order.orderId
-                                        ? {
-                                          ...o,
-                                          status: "Canceled",
-                                          paymentStatus: "Failed",
-                                        }
-                                        : o
-                                    )
-                                  );
-                                }}
+                                onExpire={() => handleExpire(order.parentOrderId)} // ✅ dùng order.parentOrderId
                               />
                             </div>
                           </Link>
                         </div>
                       ) : (
                         <>
-                          {order.status === "Canceled" && (
+                          {order.status === "Cancelled" && (
                             <span className="btn badge bg-danger">Đã hủy</span>
                           )}
 

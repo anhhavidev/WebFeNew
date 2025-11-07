@@ -17,22 +17,24 @@ export const useDashboardApi = () => {
     return res.json();
   };
 
-  // ✅ Trạng thái đơn hàng theo khoảng thời gian
-  const getOrderStatus = async (fromDate, toDate) => {
-    const token = await ensureTokenValid();
-    if (!token) return null;
+// ✅ Trạng thái đơn hàng (không cần truyền from/to date)
+const getOrderStatus = async () => {
+  const token = await ensureTokenValid();
+  if (!token) return null;
 
-    const res = await fetch(`${API_BASE}/order-status-chart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ fromDate, toDate })
-    });
-    if (!res.ok) throw new Error("Lỗi khi lấy biểu đồ trạng thái đơn hàng");
-    return res.json();
-  };
+  const res = await fetch(`${API_BASE}/order-status-chart`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({}) // hoặc bỏ hoàn toàn nếu backend cho phép
+  });
+
+  if (!res.ok) throw new Error("Lỗi khi lấy biểu đồ trạng thái đơn hàng");
+  return res.json();
+};
+
 
   // ✅ Doanh thu theo ngày/tháng/năm
   const getRevenue = async (groupBy = "month", fromDate = null, toDate = null) => {

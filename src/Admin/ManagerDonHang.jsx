@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { GetAllOrder, UpdateOrderStatus, CancelOrderAdmin } from "../Service/Admin/OrderAdminApi";
+import { GetAllOrder, CancelOrderAdmin, GetOrderDetailAdmin } from "../Service/Admin/OrderAdminApi";
+
 import useAuth from '../Hooks/useAuth';
 import { useNavigate } from "react-router-dom";
 export default function ManagerDonHang() {
     const [orders, setOrders] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
+    const [orderDetail, setOrderDetail] = useState(null); // lưu chi tiết đơn hàng
+    const [showDetailModal, setShowDetailModal] = useState(false); // để hiện modal/hiển thị
     const { ensureTokenValid } = useAuth();
     const navigate = useNavigate();
     useEffect(() => {
@@ -34,14 +37,25 @@ export default function ManagerDonHang() {
         }
     };
 
-    const handleStatusChange = (index, newStatus) => {
-        const updated = [...orders]; //tạo mảng mới chuwasa các phần tử order 
-        updated[index].status = newStatus;
-        setOrders(updated);
+
+    const handleViewOrder = async (orderId) => {
+        const token = await ensureTokenValid();
+        if (!token) return;
+
+        try {
+            const result = await GetOrderDetailAdmin(orderId, token);
+            if (!result.isSuccess) {
+                alert(result.message || "Lấy chi tiết đơn thất bại");
+                return;
+            }
+            setOrderDetail(result.data); // lưu dữ liệu chi tiết
+            setShowDetailModal(true);    // bật modal/hiển thị
+        } catch (err) {
+            console.error(err);
+            alert("Lấy chi tiết đơn thất bại");
+        }
     };
-    const handleViewOrder = (orderId) => {
-        navigate(`/admin/dashboard/order/${orderId}`);
-    };
+
     const handleCancelOrder = async (orderId, index) => {
         const reason = prompt("Nhập lý do hủy đơn:");
         if (!reason) return;
@@ -73,73 +87,40 @@ export default function ManagerDonHang() {
             alert("Hủy đơn thất bại.");
         }
     };
-    const handleUpdateStatus = async (orderId, newStatus, originalStatus, index) => {
 
-        if (newStatus === originalStatus) {
-            alert("Bạn chưa thay đổi trạng thái.");
-            return;
-        }
 
-        const token = await ensureTokenValid();
-        if (!token) return;
+    // Hàm nhận status dạng string (ví dụ "Pending", "Confirmed") và trả về JSX badge
+    const renderOrderStatusBadge = (status) => {
+        const statusMap = {
+            Pending: "Chờ xác nhận",
+            Confirmed: "Đã xác nhận",
+            ReadyToShip: "Chờ lấy hàng",
+            Assigned: "Đơn hàng đã được gán cho shipper",
+            Shipping: "Đang giao",
+            Delivered: "Đã giao thành công",
+            Received: "Khách hàng đã nhận hàng",
+            FailedDelivery: "Giao thất bại",
+            Cancelled: "Đã hủy",
+            PartiallyReceived: "Đã nhận một phần",
+            PartiallyCancelled: "Đã hủy một phần"
+        };
 
-        try {
-            await UpdateOrderStatus(orderId, newStatus, token);
-            alert("Cập nhật trạng thái thành công!");
+        const badgeClass = {
+            Delivered: "bg-success",
+            Received: "bg-success",
+            FailedDelivery: "bg-warning",
+            Cancelled: "bg-danger",
+            PartiallyCancelled: "bg-danger",
+            PartiallyReceived: "bg-warning"
+        };
 
-            // ✅ Cập nhật lại orders một cách an toàn
-            setOrders(prevOrders => {
-                const updated = [...prevOrders];
-                updated[index] = {
-                    ...updated[index],
-                    status: newStatus,
-                    originalStatus: newStatus
-                };
-                return updated;
-            });
-
-            // ✅ Xóa tempStatus theo cách an toàn
-            setTempStatuses(prev => {
-                const clone = { ...prev };
-                delete clone[index];
-                return clone;
-            });
-
-        } catch (err) {
-            console.error(err);
-            alert("Cập nhật thất bại.");
-        }
+        return (
+            <span className={`badge ${badgeClass[status] || "bg-secondary"}`}>
+                {statusMap[status] || status}
+            </span>
+        );
     };
 
-    // object ánh xạ từ tiếng an hsang teiesng viet  để hiển thị 
-    const statusMap = {
-        Pending: "Chờ xác nhận",
-        Confirm: "Đang xử lý",
-        Shipping: "Đang giao hàng",
-        Delivery: "Đã giao",
-        Canceled: "Đã hủy"
-    };
-    // xác định trạng thái hợp lệ tiếp theo 
-    const getNextValidStatuses = (currentStatus) => {
-        switch (currentStatus) {
-            case "Pending":
-                return ["Confirm"];
-            case "Confirm":
-                return ["Shipping"];
-            case "Shipping":
-                return []; // Admin KHÔNG được phép chuyển tiếp
-            default:
-                return [];
-        }
-    };
-    //dùng để luuw trạng thái mới ng dùng chọm truoc khi cap nhap 
-    const [tempStatuses, setTempStatuses] = useState({});
-    const handleTempStatusChange = (index, newStatus) => {
-        setTempStatuses(prev => ({
-            ...prev,
-            [index]: newStatus
-        }));
-    };
 
 
     return (
@@ -154,7 +135,6 @@ export default function ManagerDonHang() {
                         <th>Tổng tiền</th>
                         <th>Thanh toán</th>
                         <th>Trạng thái</th>
-                        <th>Ghi chú</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -163,70 +143,40 @@ export default function ManagerDonHang() {
                         <tr><td colSpan="8" className='text-center'>Không có đơn hàng nào</td></tr>
                     ) : (
                         orders.map((item, index) => (
-                            <tr key={item.orderId}>
-                                <td>{item.orderId}</td>
-                                <td>{item.email}</td>
-                                <td>{new Date(item.orderDat).toLocaleDateString("vi-VN")}</td>
+                            <tr key={item.parentOrderId}>
+                                <td>{item.parentOrderId}</td>
+                                <td>{item.buyerEmail}</td>
+                                <td>{new Date(item.orderDate).toLocaleDateString("vi-VN")}</td>
                                 <td>{item.totalAmount.toLocaleString("vi-VN")}₫</td>
-                                <td>{item.paymentStatus}</td>
                                 <td>
-                                    {["Delivery", "Canceled"].includes(item.status) ? ( // itemn.status là 1 trogn 2 cái kia 
-                                        <span className={`badge ${item.status === "Delivery" ? "bg-success" : "bg-danger"}`}>
-                                            {statusMap[item.status]}
-                                        </span>
-                                    ) : (
-                                        <select
-                                            className="form-select w-auto"
-                                            value={tempStatuses[index] || item.status}
-                                            onChange={(e) => handleTempStatusChange(index, e.target.value)}
-                                        >
-                                            <option value={item.status} >
-                                                {statusMap[item.status]}
-                                            </option>
-                                            {getNextValidStatuses(item.status)
-                                                .filter(status => status !== item.status)
-                                                .map((status) => (
-                                                    <option key={status} value={status}>
-                                                        {statusMap[status]}
-                                                    </option>
-                                                ))}
-                                        </select>
-
-                                    )}
+                                    {item.paymentStatus === "Paid"
+                                        ? "Đã thanh toán"
+                                        : item.paymentStatus === "Failed"
+                                            ? "Thanh toán thất bại"
+                                            : "Chưa thanh toán"}
                                 </td>
+                                <td>{renderOrderStatusBadge(item.status)}</td>
 
-                                <td>{item.note}</td>
                                 <td>
                                     <button
                                         className="btn btn-sm btn-primary me-1"
-                                        onClick={() => handleViewOrder(item.orderId)}
+                                        onClick={() => handleViewOrder(item.parentOrderId)} // chú ý item.parentOrderId
                                     >
                                         🔍Xem
                                     </button>
                                     <button
                                         className="btn btn-sm btn-danger me-1"
-                                        onClick={() => handleCancelOrder(item.orderId, index)}
-                                        disabled={!["Pending", "Confirm"].includes(item.status)} // chỉ cho hủy Pending và Confirm
+                                        onClick={() => handleCancelOrder(item.parentOrderId, index)}
+                                        disabled={
+                                            !["Pending", "Confirmed"].includes(item.status) ||
+                                            item.paymentStatus !== "Unpaid"
+                                        } // chỉ cho hủy Pending và Confirm
                                     >
                                         🗑️Hủy Đơn
                                     </button>
 
 
-                                    {["Delivery", "Canceled"].includes(item.status) ? null : (
-                                        <button
-                                            className="btn btn-sm btn-outline-success"
-                                            onClick={() =>
-                                                handleUpdateStatus(
-                                                    item.orderId,
-                                                    tempStatuses[index] || item.status,
-                                                    item.originalStatus,
-                                                    index
-                                                )
-                                            }
-                                        >
-                                            Cập nhật
-                                        </button>
-                                    )}
+
                                 </td>
 
                             </tr>
@@ -244,6 +194,65 @@ export default function ManagerDonHang() {
                     Trang sau
                 </button>
             </div>
+            {showDetailModal && orderDetail && (
+                <div className="modal show d-block" tabIndex="-1">
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Chi tiết đơn {orderDetail.parentOrderId}</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowDetailModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <p><strong>Người mua:</strong> {orderDetail.buyerName} ({orderDetail.buyerEmail})</p>
+
+                                <p><strong>Tổng tiền:</strong> {orderDetail.totalAmount.toLocaleString("vi-VN")}₫</p>
+                                <p><strong>Tổng phí ship:</strong> {orderDetail.totalShippingFee.toLocaleString("vi-VN")}₫</p>
+                                <p><strong>Trạng thái:</strong> {renderOrderStatusBadge(orderDetail.status)}</p>
+
+                                {orderDetail.childOrders.map((child, i) => (
+                                    <div key={i} className="border p-2 mb-2">
+                                        <p><strong>Người bán:</strong> {child.sellerName} ({child.sellerEmail})</p>
+                                        <p><strong>Trạng thái:</strong> {renderOrderStatusBadge(child.status)}</p>
+                                        <p><strong>Phí vận chuyển:</strong> {child.shippingFee.toLocaleString("vi-VN")}₫</p>
+                                        <p><strong>Địa chỉ giao đến :</strong> {child.diaDiemGiaoToi}</p>
+                                        <p><strong>SĐT Người mua :</strong> {child.buyerPhone}</p>
+                                        <table className="table table-sm mt-2">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sản phẩm</th>
+                                                    <th>SL</th>
+                                                    <th>Đơn giá</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {child.items.map((item, j) => (
+                                                    <tr key={j}>
+                                                        <td>
+                                                            <img
+                                                                src={item.productImage}
+                                                                alt={item.productName}
+                                                                style={{ width: '60px', height: '60px', objectFit: 'cover', marginRight: '8px' }}
+                                                            />
+                                                            {item.productName}
+                                                        </td>
+                                                        <td>{item.quantity}</td>
+                                                        <td>{item.unitPrice.toLocaleString("vi-VN")}₫</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailModal(false)}>Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
+
     );
 }
