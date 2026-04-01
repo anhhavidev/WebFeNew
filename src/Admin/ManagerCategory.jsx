@@ -1,236 +1,237 @@
 import React, { useEffect, useState } from "react";
-import {
-  GetAllCategory,
-  AddCategory,
-  UpdateCategory,
-  DeleteCategory,
-} from "../Service/Admin/CategoryApi";
-import useAuth from "../Hooks/useAuth"; // để lấy token
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./AdminDashboard.css";
+import { 
+  getCategories, 
+  addCategory, 
+  updateCategory, 
+  deleteCategory 
+} from "../Service/categoryApi";
+import { FiSearch, FiFilter, FiPlus, FiEdit2, FiTrash2, FiTag } from "react-icons/fi";
 
-export default function ManagerCategory() {
+const ManagerCategory = () => {
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    isActive: true,
   });
 
-  const { ensureTokenValid } = useAuth();
-
-  // 🔹 Lấy danh sách category
-  const fetchCategories = async () => {
-    const result = await GetAllCategory();
-    if (result.isSuccess) setCategories(result.data || []);
-    else alert(result.message);
-  };
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // 🔹 Lưu category (thêm hoặc sửa)
-  const handleSave = async () => {
-    const token = await ensureTokenValid();
-    if (!token) return;
-
-    if (!formData.name.trim()) {
-      alert("Tên danh mục không được để trống");
-      return;
-    }
-
-    let result;
-    if (editingCategory) {
-      result = await UpdateCategory(
-        {
-          categoryid: editingCategory.categoryid,
-          name: formData.name,
-          description: formData.description,
-          isActive: formData.isActive,
-        },
-        token
-      );
-    } else {
-      result = await AddCategory(
-        {
-          name: formData.name,
-          description: formData.description,
-          isActive: formData.isActive,
-        },
-        token
-      );
-    }
-
-    if (result.isSuccess) {
-      alert(result.message);
-      fetchCategories();
-      setShowModal(false);
-      resetForm();
-    } else {
-      alert(result.message);
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Lỗi tải danh mục:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔹 Xóa category
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa danh mục này?")) return;
-
-    const token = await ensureTokenValid();
-    if (!token) return;
-
-    const result = await DeleteCategory(id, token);
-    if (result.isSuccess) {
-      alert(result.message);
-      fetchCategories();
-    } else {
-      alert(result.message);
-    }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Sửa category
-  const handleEdit = (category) => {
+  const openForm = (category = null) => {
     setEditingCategory(category);
-    setFormData({
-      name: category.name,
-      description: category.description || "",
-      isActive: category.isActive ?? true,
-    });
+    if (category) {
+      setFormData({
+        name: category.name,
+        description: category.description,
+      });
+    } else {
+      setFormData({ name: "", description: "" });
+    }
     setShowModal(true);
   };
 
-  const resetForm = () => {
+  const closeForm = () => {
+    setShowModal(false);
     setEditingCategory(null);
-    setFormData({ name: "", description: "", isActive: true });
+    setFormData({ name: "", description: "" });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name.trim()) return alert("Tên danh mục không được để trống!");
+
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.categoryid, formData);
+        alert("Cập nhật danh mục thành công!");
+      } else {
+        await addCategory(formData);
+        alert("Thêm danh mục thành công!");
+      }
+      closeForm();
+      fetchCategories();
+    } catch (error) {
+      console.error("Lỗi lưu danh mục:", error);
+      alert("Lỗi khi lưu danh mục!");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này?")) return;
+    try {
+      await deleteCategory(id);
+      alert("Xóa danh mục thành công!");
+      fetchCategories();
+    } catch (error) {
+      console.error("Lỗi xóa danh mục:", error);
+      alert("Không thể xóa danh mục này!");
+    }
+  };
+
+  const filteredCategories = categories.filter((c) =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="container mt-4">
-      <h4>Quản lý loại sản phẩm</h4>
-      <button className="btn btn-primary mb-2" onClick={() => setShowModal(true)}>
-        Thêm mới
-      </button>
+    <div>
+      <div className="mb-6 mt-2">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 page-title">Quản lý danh mục</h2>
+        <p className="text-gray-600 page-subtitle">Danh sách các danh mục sản phẩm</p>
+      </div>
 
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Tên loại</th>
-            <th>Mô tả</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.length === 0 ? (
-            <tr>
-              <td colSpan="5" className="text-center">
-                Không có danh mục
-              </td>
-            </tr>
-          ) : (
-            categories.map((cat) => (
-              <tr key={cat.categoryid}>
-                <td>{cat.categoryid}</td>
-                <td>{cat.name}</td>
-                <td>{cat.description || "Không có"}</td>
-                <td>
-                  {cat.isActive ? (
-                    <span className="badge bg-success">Hoạt động</span>
-                  ) : (
-                    <span className="badge bg-secondary">Ngừng</span>
-                  )}
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-warning me-1"
-                    onClick={() => handleEdit(cat)}
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(cat.categoryid)}
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      {/* Modal thêm/sửa */}
-      {showModal && (
-        <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  {editingCategory ? "Sửa danh mục" : "Thêm danh mục"}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Tên loại:</label>
-                <input
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Tên danh mục"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-
-                <label className="form-label">Mô tả:</label>
-                <textarea
-                  className="form-control mb-2"
-                  rows="2"
-                  placeholder="Mô tả danh mục"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                ></textarea>
-
-                <label className="form-label">Trạng thái:</label>
-                <select
-                  className="form-select"
-                  value={formData.isActive ? "true" : "false"}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.value === "true" })
-                  }
-                >
-                  <option value="true">Hoạt động</option>
-                  <option value="false">Ngừng</option>
-                </select>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                >
-                  Đóng
-                </button>
-                <button type="button" className="btn btn-primary" onClick={handleSave}>
-                  Lưu
-                </button>
-              </div>
-            </div>
+      <div className="table-container">
+        {/* Actions Bar */}
+        <div className="table-header-actions">
+          <div className="table-search">
+            <FiSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm danh mục..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
+          
+          <div className="table-actions">
+            <button className="btn-table-action primary" onClick={() => openForm(null)}>
+              <FiPlus className="w-5 h-5" /> Thêm danh mục
+            </button>
+          </div>
+        </div>
+
+        {/* Categories Table */}
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th width="100px">ID</th>
+                <th width="30%">Tên danh mục</th>
+                <th>Mô tả</th>
+                <th width="120px" className="text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-5">Đang tải dữ liệu...</td>
+                </tr>
+              ) : filteredCategories.length > 0 ? (
+                filteredCategories.map((category) => (
+                  <tr key={category.categoryid}>
+                    <td className="text-muted fw-medium">#C{category.categoryid}</td>
+                    <td className="fw-medium text-dark">
+                        <div className="d-flex align-items-center">
+                            <span className="bg-light p-2 rounded-2 me-3 text-primary d-inline-flex align-items-center justify-content-center border">
+                                <FiTag size={16} />
+                            </span>
+                            {category.name}
+                        </div>
+                    </td>
+                    <td className="text-muted">{category.description || "Chưa có mô tả"}</td>
+                    <td>
+                      <div className="action-buttons justify-content-center">
+                        <button
+                          className="btn-icon edit"
+                          title="Sửa danh mục"
+                          onClick={() => openForm(category)}
+                        >
+                          <FiEdit2 />
+                        </button>
+                        <button
+                          className="btn-icon delete"
+                          title="Xóa danh mục"
+                          onClick={() => handleDelete(category.categoryid)}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="text-center py-5 text-muted">Không tìm thấy danh mục nào.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modern Modal for Adding/Editing Category */}
+      {showModal && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">{editingCategory ? "Cập nhật danh mục" : "Thêm danh mục mới"}</h5>
+                        <button type="button" className="btn-close" onClick={closeForm}></button>
+                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="modal-body">
+                            <div className="mb-4">
+                                <label className="form-label text-muted fw-medium fs-7">Tên danh mục <span className="text-danger">*</span></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    placeholder="Ví dụ: Điện thoại thông minh"
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7">Mô tả danh mục</label>
+                                <textarea
+                                    className="form-control"
+                                    name="description"
+                                    rows="4"
+                                    value={formData.description}
+                                    onChange={handleInputChange}
+                                    placeholder="Nhập mô tả cho danh mục này..."
+                                ></textarea>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary px-4 text-white" onClick={closeForm}>Hủy</button>
+                            <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>
+                                {editingCategory ? "Cập nhật" : "Thêm mới"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default ManagerCategory;

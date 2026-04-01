@@ -1,235 +1,345 @@
 import React, { useEffect, useState } from "react";
-import { getAllUsers, createUser, updateUser, deleteUser, getRoles } from "../Service/Admin/UserAdminApi";
-import useAuth from "../Hooks/useAuth";
+import {
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  assignRole,
+} from "../Service/Admin/UserAdminApi";
+import "bootstrap/dist/css/bootstrap.min.css";
+import useAuth from '../Hooks/useAuth';
+import "./AdminDashboard.css";
+import { FiSearch, FiFilter, FiPlus, FiEdit2, FiTrash2, FiUserCheck } from "react-icons/fi";
 
-export default function UserManagement() {
-    const { ensureTokenValid } = useAuth();
-    const [users, setUsers] = useState([]);
-    const [pageIndex, setPageIndex] = useState(1);
-    const [pageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
+const UserManagement = () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const { ensureTokenValid } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    hoTen: "",
+    email: "",
+    sdt: "",
+    password: "",
+    gioiTinh: true,
+  });
 
-    const [editingUser, setEditingUser] = useState(null); // dùng cho edit
-    const [roles, setRoles] = useState([]); // danh sách role từ API
-    const [form, setForm] = useState({
-        id: "",
-        email: "",
-        fullName: "",
-        password: "",
-        roleNames: [],
-        userName: "",// thêm
-        isActive: true  // ✅ thêm mặc định là true
+  const [roleData, setRoleData] = useState({ userId: "", roleName: "Customer" });
+
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
+
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    const token = await ensureTokenValid();
+    if (!token) return;
+
+    try {
+      const data = await getAllUsers(token);
+      setUsers(data);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách người dùng:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: name === "gioiTinh" ? value === "true" : value,
     });
+  };
 
-    // ✅ Load danh sách user
-    const fetchUsers = async () => {
-        const token = await ensureTokenValid();
-        if (!token) return;
+  const handleCreateOrUpdate = async (e) => {
+    e.preventDefault();
+    const token = await ensureTokenValid();
+    if (!token) return;
 
-        try {
-            const data = await getAllUsers(pageIndex, pageSize, token);
-            setUsers(data.data.items || []);
-            setTotalPages(data.data.totalPages || 1);
-        } catch (err) {
-            console.error(err);
-            alert("Lỗi khi lấy danh sách user");
-        }
-    };
+    try {
+      if (editingUserId) {
+        if (!formData.password) delete formData.password;
+        await updateUser(editingUserId, formData, token);
+        alert("Cập nhật người dùng thành công!");
+      } else {
+        await createUser(formData, token);
+        alert("Thêm người dùng thành công!");
+      }
+      setFormData({ hoTen: "", email: "", sdt: "", password: "", gioiTinh: true });
+      setEditingUserId(null);
+      setShowFormModal(false);
+      fetchUsers();
+    } catch (error) {
+      console.error("Lỗi khi lưu người dùng:", error);
+      alert("Đã xảy ra lỗi!");
+    }
+  };
 
-    // ✅ Load danh sách roles
-    const fetchRoles = async () => {
-        const token = await ensureTokenValid();
-        if (!token) return;
+  const handleEdit = (user) => {
+    setEditingUserId(user.id);
+    setFormData({
+      hoTen: user.hoTen,
+      email: user.email,
+      sdt: user.sdt,
+      password: "",
+      gioiTinh: user.gioiTinh,
+    });
+    setShowFormModal(true);
+  };
 
-        try {
-            const data = await getRoles(token);
-            setRoles(data.data || []);
-        } catch (err) {
-            console.error(err);
-            alert("Lỗi khi lấy danh sách roles");
-        }
-    };
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return;
+    const token = await ensureTokenValid();
+    if (!token) return;
 
-    useEffect(() => {
-        fetchUsers();
-        fetchRoles();
-    }, [pageIndex]);
+    try {
+      await deleteUser(id, token);
+      alert("Xóa người dùng thành công!");
+      fetchUsers();
+    } catch (error) {
+      console.error("Lỗi khi xóa người dùng:", error);
+    }
+  };
 
-    // ✅ handleChange xử lý cả checkbox
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setForm({
-            ...form,
-            [name]: type === "checkbox" ? checked : value
-        });
-    };
+  const handleAssignRole = async (e) => {
+    e.preventDefault();
+    const token = await ensureTokenValid();
+    if (!token) return;
 
-    // ✅ Handle multi-role change
-    const handleRoleChange = (e) => {
-        const options = e.target.options;
-        const selected = [];
-        for (let i = 0; i < options.length; i++) {
-            if (options[i].selected) selected.push(options[i].value);
-        }
-        setForm({ ...form, roleNames: selected });
-    };
+    try {
+      await assignRole(roleData.userId, roleData.roleName, token);
+      alert("Cấp quyền thành công!");
+      setShowRoleModal(false);
+      fetchUsers();
+    } catch (error) {
+      console.error("Lỗi khi cấp quyền:", error);
+      alert("Lỗi cấp quyền");
+    }
+  };
 
-    // ✅ Thêm hoặc sửa user
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const token = await ensureTokenValid();
-        if (!token) return;
+  const getRoleBadge = (roles) => {
+    if (!roles || roles.length === 0) return <span className="status-badge secondary">User</span>;
+    if (roles.includes("Admin")) return <span className="status-badge danger">Admin</span>;
+    if (roles.includes("Seller")) return <span className="status-badge warning">Seller</span>;
+    if (roles.includes("Shipper")) return <span className="status-badge info">Shipper</span>;
+    return <span className="status-badge success">Customer</span>;
+  };
 
-        try {
-            if (editingUser) {
-                await updateUser(form, token);
-                alert("Cập nhật user thành công");
-            } else {
-                await createUser(form, token);
-                alert("Thêm user thành công");
-            }
-            setForm({ id: "", email: "", fullName: "", password: "", roleNames: [] });
-            setEditingUser(null);
-            fetchUsers();
-        } catch (err) {
-            console.error(err);
-            alert("Thao tác thất bại");
-        }
-    };
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.hoTen?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.sdt?.includes(searchTerm);
+      
+    const matchesRole = roleFilter === "" ? true : user.roles?.includes(roleFilter) || (!user.roles?.length && roleFilter === "Customer");
+    
+    return matchesSearch && matchesRole;
+  });
 
-    // ✅ Chỉnh sửa user
-    const handleEdit = (user) => {
-        setEditingUser(user);
-        setForm({
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            password: "",
-            roleNames: user.roleNames || [],
-            isActive: user.isActive,
-            userName: user.userName || user.email // fallback nếu userName trống
-        });
-    };
+  return (
+    <div>
+      <div className="mb-6 mt-2">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 page-title">Quản lý người dùng</h2>
+        <p className="text-gray-600 page-subtitle">Quản lý thông tin và phân quyền tài khoản</p>
+      </div>
 
+      <div className="table-container">
+        {/* Actions Bar */}
+        <div className="table-header-actions">
+          <div className="table-search">
+            <FiSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, email, SĐT..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="table-actions">
+            <select 
+                className="form-select border-gray-300"
+                style={{ borderRadius: '8px', minWidth: '140px' }}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+            >
+                <option value="">Tất cả vai trò</option>
+                <option value="Admin">Admin</option>
+                <option value="Customer">Khách hàng</option>
+                <option value="Seller">Người bán</option>
+                <option value="Shipper">Người giao hàng</option>
+            </select>
+            <button className="btn-table-action primary" onClick={() => {
+                setEditingUserId(null);
+                setFormData({ hoTen: "", email: "", sdt: "", password: "", gioiTinh: true });
+                setShowFormModal(true);
+            }}>
+              <FiPlus className="w-5 h-5" /> Thêm người dùng
+            </button>
+          </div>
+        </div>
 
-    // ✅ Xóa user
-    const handleDelete = async (userId) => {
-        if (!window.confirm("Bạn có chắc muốn xóa user này?")) return;
+        {/* Users Table */}
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Họ Tên</th>
+                <th>Email</th>
+                <th>Số điện thoại</th>
+                <th>Giới tính</th>
+                <th>Vai trò</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-5">Đang tải danh sách người dùng...</td>
+                </tr>
+              ) : filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="fw-medium text-dark">{user.hoTen}</td>
+                    <td>{user.email}</td>
+                    <td>{user.sdt || "—"}</td>
+                    <td>{user.gioiTinh ? "Nam" : "Nữ"}</td>
+                    <td>{getRoleBadge(user.roles)}</td>
+                    <td>
+                        <div className="action-buttons">
+                            <button
+                                className="btn-icon view"
+                                title="Cấp quyền"
+                                onClick={() => {
+                                    setRoleData({ userId: user.id, roleName: user.roles?.[0] || "Customer" });
+                                    setShowRoleModal(true);
+                                }}
+                            >
+                                <FiUserCheck />
+                            </button>
+                            <button
+                                className="btn-icon edit"
+                                title="Sửa thông tin"
+                                onClick={() => handleEdit(user)}
+                            >
+                                <FiEdit2 />
+                            </button>
+                            <button
+                                className="btn-icon delete"
+                                title="Xóa người dùng"
+                                onClick={() => handleDelete(user.id)}
+                            >
+                                <FiTrash2 />
+                            </button>
+                        </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center py-5 text-muted">Không tìm thấy người dùng nào.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        const token = await ensureTokenValid();
-        if (!token) return;
-
-        try {
-            await deleteUser(userId, token);
-            alert("Xóa user thành công");
-            fetchUsers();
-        } catch (err) {
-            console.error(err);
-            alert("Xóa thất bại");
-        }
-    };
-
-    return (
-        <div className="container mt-4">
-            <h3>Quản lý người dùng</h3>
-
-            {/* Form thêm/sửa user */}
-            <form className="border p-3 mb-4 rounded shadow-sm bg-light" onSubmit={handleSubmit}>
-                <h5>{editingUser ? "Chỉnh sửa User" : "Thêm User"}</h5>
-                <div className="mb-2">
-                    <label>Email:</label>
-                    <input type="email" name="email" value={form.email} onChange={handleChange} className="form-control" required />
-                </div>
-                <div className="mb-2">
-                    <label>Họ và tên:</label>
-                    <input type="text" name="fullName" value={form.fullName} onChange={handleChange} className="form-control" required />
-                </div>
-                <div className="mb-2">
-                    <label>UserName:</label>
-                    <input
-                        type="text"
-                        name="userName"
-                        value={form.userName}
-                        onChange={handleChange}
-                        className="form-control"
-                        required
-                    />
-                </div>
-
-                {!editingUser && (
-                    <div className="mb-2">
-                        <label>Password:</label>
-                        <input type="password" name="password" value={form.password} onChange={handleChange} className="form-control" required />
+      {/* User Form Modal */}
+      {showFormModal && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">{editingUserId ? "Cập nhật người dùng" : "Thêm người dùng mới"}</h5>
+                        <button type="button" className="btn-close" onClick={() => setShowFormModal(false)}></button>
                     </div>
-                )}
-                <div className="mb-2">
-                    <label>Active:</label>
-                    <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="form-check-input ms-2" />
+                    <form onSubmit={handleCreateOrUpdate}>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7">Họ Tên</label>
+                                <input type="text" className="form-control" name="hoTen" value={formData.hoTen} onChange={handleInputChange} required />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7">Email</label>
+                                <input type="email" className="form-control" name="email" value={formData.email} onChange={handleInputChange} required />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7">Số điện thoại</label>
+                                <input type="text" className="form-control" name="sdt" value={formData.sdt} onChange={handleInputChange} required />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7">Mật khẩu {editingUserId && "(Bỏ trống nếu không đổi)"}</label>
+                                <input type="password" className="form-control" name="password" value={formData.password} onChange={handleInputChange} required={!editingUserId} />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7 d-block">Giới tính</label>
+                                <div className="form-check form-check-inline mt-2">
+                                    <input className="form-check-input" type="radio" name="gioiTinh" value="true" checked={formData.gioiTinh === true} onChange={handleInputChange} />
+                                    <label className="form-check-label">Nam</label>
+                                </div>
+                                <div className="form-check form-check-inline mt-2">
+                                    <input className="form-check-input" type="radio" name="gioiTinh" value="false" checked={formData.gioiTinh === false} onChange={handleInputChange} />
+                                    <label className="form-check-label">Nữ</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary px-4 text-white" onClick={() => setShowFormModal(false)}>Hủy</button>
+                            <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>{editingUserId ? "Cập nhật" : "Thêm mới"}</button>
+                        </div>
+                    </form>
                 </div>
-                <div className="mb-2">
-                    <label>Roles:</label>
-                    <select
-                        name="roleNames"
-                        multiple
-                        value={form.roleNames}
-                        onChange={handleRoleChange}
-                        className="form-select"
-                        required
-                    >
-                        {roles.map((role) => (
-                            <option key={role} value={role}>{role}</option>
-                        ))}
-                    </select>
-                </div>
-                <button className="btn btn-primary">{editingUser ? "Cập nhật" : "Thêm"}</button>
-                {editingUser && (
-                    <button type="button" className="btn btn-secondary ms-2" onClick={() => { setEditingUser(null); setForm({ id: "", email: "", fullName: "", password: "", roleNames: [] }); }}>
-                        Hủy
-                    </button>
-                )}
-            </form>
-
-            {/* Danh sách user */}
-            <table className="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Email</th>
-                        <th>Họ và tên</th>
-                        <th>User Name </th>
-                        <th>Roles</th>
-                        <th>Active</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.length === 0 ? (
-                        <tr><td colSpan="4" className="text-center">Không có user nào</td></tr>
-                    ) : users.map((user) => (
-                        <tr key={user.id}>
-                            <td>{user.email}</td>
-                            <td>{user.fullName}</td>
-                            <td>{user.userName}</td>
-                            <td>{(user.roleNames || []).join(", ")}</td>
-                            <td>{user.isActive ? "✅" : "❌"}</td>
-                            <td>
-                                <button className="btn btn-sm btn-primary me-1" onClick={() => handleEdit(user)}>Sửa</button>
-                                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(user.id)}>Xóa</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Phân trang */}
-            <div className="d-flex justify-content-center mt-3">
-                <button className="btn btn-sm btn-primary me-2" onClick={() => setPageIndex(p => Math.max(p - 1, 1))} disabled={pageIndex === 1}>
-                    Trang trước
-                </button>
-                <span className="align-self-center">Trang {pageIndex} / {totalPages}</span>
-                <button className="btn btn-sm btn-primary ms-2" onClick={() => setPageIndex(p => Math.min(p + 1, totalPages))} disabled={pageIndex === totalPages}>
-                    Trang sau
-                </button>
             </div>
         </div>
-    );
-}
+      )}
+
+      {/* Assign Role Modal */}
+      {showRoleModal && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered modal-sm">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Cấp quyền tài khoản</h5>
+                        <button type="button" className="btn-close" onClick={() => setShowRoleModal(false)}></button>
+                    </div>
+                    <form onSubmit={handleAssignRole}>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label text-muted fw-medium fs-7">Chọn vai trò mới</label>
+                                <select 
+                                    className="form-select"
+                                    value={roleData.roleName}
+                                    onChange={(e) => setRoleData({ ...roleData, roleName: e.target.value })}
+                                >
+                                    <option value="Customer">Khách hàng</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Seller">Người bán</option>
+                                    <option value="Shipper">Người giao hàng</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary px-4 text-white" onClick={() => setShowRoleModal(false)}>Hủy</button>
+                            <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>Cấp quyền</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UserManagement;

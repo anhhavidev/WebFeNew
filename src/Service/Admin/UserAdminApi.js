@@ -3,7 +3,7 @@
 const BASE_URL = "http://localhost:5230/api/Admin"; // sửa theo URL backend của bạn
 
 // ✅ Lấy danh sách user (có phân trang)
-export const getAllUsers = async (pageIndex = 1, pageSize = 10, token) => {
+export const getAllUsers = async (token, pageIndex = 1, pageSize = 100) => {
   const response = await fetch(`${BASE_URL}/get-all?pageIndex=${pageIndex}&pageSize=${pageSize}`, {
     headers: {
       Authorization: `Bearer ${token}`
@@ -39,8 +39,8 @@ export const createUser = async (userData, token) => {
 };
 
 // ✅ Cập nhật user
-export const updateUser = async (userData, token) => {
-  const response = await fetch(`${BASE_URL}/update-user`, {
+export const updateUser = async (id, userData, token) => {
+  const response = await fetch(`${BASE_URL}/update-user/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -61,6 +61,20 @@ export const deleteUser = async (userId, token) => {
     }
   });
   if (!response.ok) throw new Error("Xóa user thất bại");
+  return response.json();
+};
+
+// ✅ Gán role cho user
+export const assignRole = async (userId, roleName, token) => {
+  const response = await fetch(`${BASE_URL}/assign-role`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ userId, roleName })
+  });
+  if (!response.ok) throw new Error("Gán quyền thất bại");
   return response.json();
 };
 
