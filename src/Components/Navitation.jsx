@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import styles from "./Navitation.module.css";
-import { getAllCategories } from "../Service/CateogryApi";
+import { getAllCategories } from "../Service/categoryApi";
 import { Link, useSearchParams } from "react-router-dom";
+import '../Pages/Common/CustomerPages.css';
 
 export default function Navitation() {
   const [categories, setCategories] = useState([]);
@@ -17,30 +17,27 @@ export default function Navitation() {
   }, []);
 
   return (
-    <nav className={styles.navbar}>
-      <ul className={styles.navList}>
-        <li className={styles.navItem}>
-          <Link
-            to="/?page=1"
-            className={`${styles.navLink} ${!selectedCategory ? styles.active : ""}`}
-          >
-            Tất cả
-          </Link>
-        </li>
+    <nav className="cp-nav">
+      <div className="cp-nav-inner">
+        <Link
+          to="/?page=1"
+          className={`cp-nav-link ${!selectedCategory ? "active" : ""}`}
+        >
+          Tất cả
+        </Link>
 
         {categories.map((category) => (
-          <li key={category.categoryid} className={styles.navItem}>
-            <Link
-              to={`/?page=1&category=${encodeURIComponent(category.categoryid)}`}
-              className={`${styles.navLink} ${
-                selectedCategory === category.categoryid.toString() ? styles.active : ""
-              }`}
-            >
-              {category.name}
-            </Link>
-          </li>
+          <Link
+            key={category.categoryid}
+            to={`/?page=1&category=${encodeURIComponent(category.categoryid)}`}
+            className={`cp-nav-link ${
+              selectedCategory === category.categoryid.toString() ? "active" : ""
+            }`}
+          >
+            {category.name}
+          </Link>
         ))}
-      </ul>
+      </div>
     </nav>
   );
 }

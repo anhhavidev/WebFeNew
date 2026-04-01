@@ -28,6 +28,7 @@ export const getPaginatedProducts = async (filter = {}) => {
 
   return await response.json(); // PageResult<ProductDTO>
 };
+//lấy danh sách sản phẩm adimin 
 export const getPaginatedProductAdmin = async (filter = {}) => {
   const query = new URLSearchParams();
 
@@ -39,6 +40,31 @@ export const getPaginatedProductAdmin = async (filter = {}) => {
   });
 
   const url = `http://localhost:5230/api/Product/admin/paging?${query.toString()}`;
+
+  // 👇 Lấy token từ localStorage (đặt khi login)
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(url, {
+    headers: {
+      "Authorization": `Bearer ${token}`, // 👈 truyền token ở đây
+    },
+  });
+
+  if (!response.ok) throw new Error("Lỗi khi gọi API sản phẩm");
+
+  return await response.json(); // PageResult<ProductDTO>
+};
+export const getPaginatedProducSeller = async (filter = {}) => {
+  const query = new URLSearchParams();
+
+  // Duyệt qua các filter truyền lên
+  Object.entries(filter).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== '') {
+      query.append(key, value);
+    }
+  });
+
+  const url = `http://localhost:5230/api/Product/Seller/paging?${query.toString()}`;
 
   // 👇 Lấy token từ localStorage (đặt khi login)
   const token = localStorage.getItem("token");
@@ -137,6 +163,26 @@ export async function addProductWithImage(product) {
     return await response.json();
   } catch (error) {
     console.error("API thêm sản phẩm:", error);
+    throw error;
+  }
+}
+// Ẩn / bật sản phẩm (Admin)
+export async function toggleProductStatus(id) {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`http://localhost:5230/api/Product/toggle-status/${id}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error("Ẩn / bật sản phẩm thất bại");
+
+    return await response.json(); // ResponeDTO
+  } catch (error) {
+    console.error("Lỗi toggleProductStatus:", error);
     throw error;
   }
 }

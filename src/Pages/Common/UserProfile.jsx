@@ -29,7 +29,8 @@ export default function UserProfile() {
       phone: user.phone || "",
       address: user.address || "",
       gender: user.gender || "",
-      birthDate: user.birthDate ? user.birthDate.split("T")[0] : "" // format yyyy-MM-dd
+      dateOfBirth: user.dateOfBirth  ? user.dateOfBirth.split("T")[0] : "", // format yyyy-MM-dd
+      gender: user.gender, // ✅ giữ true / false / null
     });
     setShowEdit(true);
   };
@@ -37,6 +38,7 @@ export default function UserProfile() {
   // 🔹 Lưu cập nhật
   const saveEdit = async () => {
     const token = await ensureTokenValid();
+     console.log(formData); // ✅ kiểm tra key trước khi gửi
     try {
       await updateProfile(token, formData);
       alert("Cập nhật thành công ✅");
@@ -48,16 +50,29 @@ export default function UserProfile() {
   };
 
   // 🔹 Đổi mật khẩu
-  const savePassword = async () => {
-    const token = await ensureTokenValid();
-    try {
-      await changePassword(token, passData);
-      alert("Đổi mật khẩu thành công ✅");
-      setShowPass(false);
-    } catch (err) {
-      alert("Đổi mật khẩu thất bại ❌");
+// 🔹 Đổi mật khẩu
+const savePassword = async () => {
+  const token = await ensureTokenValid();
+  try {
+    const res = await changePassword(token, passData);
+    const result = res.data; // ResponeDTO<bool> từ backend
+
+    alert(result.message); // ✅ in ra thông báo từ backend
+
+    if (result.isSuccess) {
+      setShowPass(false); // ẩn form nếu thành công
     }
-  };
+  } catch (err) {
+    // Nếu backend trả lỗi (ví dụ 400, 401,...)
+    if (err.response && err.response.data) {
+      alert(err.response.data.message || "Lỗi hệ thống khi đổi mật khẩu ❌");
+    } else {
+      alert("Lỗi hệ thống khi đổi mật khẩu ❌");
+    }
+  }
+};
+
+
 
   return (
     <Container className="mt-5">
@@ -70,12 +85,15 @@ export default function UserProfile() {
             <ListGroup variant="flush">
               <ListGroup.Item><strong>Họ tên:</strong> {user.fullName}</ListGroup.Item>
               <ListGroup.Item><strong>Email:</strong> {user.email}</ListGroup.Item>
-              <ListGroup.Item><strong>Số điện thoại:</strong> {user.phone}</ListGroup.Item>
-              <ListGroup.Item><strong>Địa chỉ:</strong> {user.address}</ListGroup.Item>
-              <ListGroup.Item><strong>Ngày sinh:</strong> {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : "Chưa cập nhật"}</ListGroup.Item>
-              <ListGroup.Item><strong>Giới tính:</strong> {user.gender}</ListGroup.Item>
+              <ListGroup.Item><strong>Số điện thoại:</strong> {user.phone ? user.phone : "Chưa cập nhập"}</ListGroup.Item>
+              <ListGroup.Item><strong>Địa chỉ:</strong> {user.address ? user.address : "Chưa cập nhập"}</ListGroup.Item>
+              <ListGroup.Item><strong>Ngày sinh:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "Chưa cập nhật"}</ListGroup.Item>
+              <ListGroup.Item>
+                <strong>Giới tính:</strong> {user.gender === true ? "Nam" : user.gender === false ? "Nữ" : "Chưa cập nhật"}
+              </ListGroup.Item>
+
+              <ListGroup.Item><strong>Trạng thái:</strong> {user.isActive ? "Hoạt động" : "Chưa kích hoạt"}</ListGroup.Item>
               <ListGroup.Item><strong>Vai trò:</strong> {user.role}</ListGroup.Item>
-              <ListGroup.Item><strong>Trạng thái:</strong> {user.status}</ListGroup.Item>
               <ListGroup.Item><strong>Ngày tạo:</strong> {new Date(user.createdAt).toLocaleDateString()}</ListGroup.Item>
             </ListGroup>
             <Card.Footer className="text-center">
@@ -109,16 +127,30 @@ export default function UserProfile() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Ngày sinh</Form.Label>
-              <Form.Control type="date" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} />
+              <Form.Control
+                type="date"
+                value={formData.dateOfBirth || ""}
+                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value ? e.target.value : null })}
+              />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Giới tính</Form.Label>
-              <Form.Select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })}>
+              <Form.Select
+                value={formData.gender === true ? "true" : formData.gender === false ? "false" : ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData({
+                    ...formData,
+                    gender: value === "" ? null : value === "true" ? true : false,
+                  });
+                }}
+              >
                 <option value="">Chọn</option>
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
+                <option value="true">Nam</option>
+                <option value="false">Nữ</option>
               </Form.Select>
             </Form.Group>
+
           </Form>
         </Modal.Body>
         <Modal.Footer>

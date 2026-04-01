@@ -6,6 +6,8 @@ import "slick-carousel/slick/slick-theme.css";
 import PublicRoutes from "./Routes/PublicRoutes";
 import UserRoutes from "./Routes/UserRoutes";
 import AdminRoutes from "./Routes/AdminRoutes ";
+import ShipperRoutes from "./Routes/ShipperRoutes";
+import SellerRoutes from "./Routes/SellerRoutes";
 
 function App() {
   return (
@@ -13,8 +15,8 @@ function App() {
       <PublicRoutes />
       <UserRoutes />
       <AdminRoutes />
-      
-      
+      <ShipperRoutes/>
+      <SellerRoutes/>
     </>
   );
 }

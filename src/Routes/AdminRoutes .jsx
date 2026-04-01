@@ -8,15 +8,17 @@ import ManagerDonHang from "../Admin/ManagerDonHang";
 import ProductManagement from "../Admin/ProductManagement";
 import AdminOrderDetail from "../Admin/AdminOrderDetail";
 import UserManagement from "../Admin/UserManagement";
+import ManagerCategory from "../Admin/ManagerCategory";
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/admin/dashboard" element={<PrivateAdmin><Dashboard /></PrivateAdmin>}>
-        <Route index element={<Overview />} />                      // Mặc định
+      <Route path="/admin/dashboard" element={<PrivateAdmin><Dashboard /></PrivateAdmin>}> // routes cha 
+        <Route index element={<Overview />} />                      // Mặc định khi vao 
         <Route path="products" element={<ProductManagement />} />         // /admin/dashboard/products
-        <Route path="orders" element={<ManagerDonHang />} />             // /admin/dashboard/orders
+        <Route path="orders" element={<ManagerDonHang />} />           
         <Route path="order/:orderId" element={<AdminOrderDetail />} />
         <Route path="users" element={<UserManagement></UserManagement>}></Route>
+         <Route path="category" element={<ManagerCategory></ManagerCategory>}></Route>
       </Route>
     </Routes>
   );

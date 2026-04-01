@@ -2,38 +2,38 @@ import React, { useEffect, useState } from 'react';
 import Slider from 'react-slick';
 import UserLayout from '../../layout1/UserLayout';
 import { getPaginatedProducts } from '../../Service/ProductApi';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaShoppingCart, FaStar } from 'react-icons/fa';
 import { addProductToCart } from '../../Service/cartApi';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import useAuth from '../../Hooks/useAuth';
 import { addToLocalCart } from '../../utils/cartStorage';
-import { useCart } from '../../constants/CartContext'; // ✅
+import { useCart } from '../../constants/CartContext';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import './Home.css';
-import { getCartItems } from "../../Service/cartApi"; // đảm bảo đã import
-const arrowStyle = {
-  position: 'absolute',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  zIndex: 2,
-  fontSize: '24px',
-  color: 'white',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  borderRadius: '50%',
-  padding: '8px',
-  cursor: 'pointer',
-};
+import './CustomerPages.css';
+import { getCartItems } from "../../Service/cartApi";
 
 const PrevArrow = ({ onClick }) => (
-  <div onClick={onClick} style={{ ...arrowStyle, left: '10px' }}>
+  <div onClick={onClick} style={{
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: 2,
+    left: '16px', width: '44px', height: '44px',
+    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
+    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', color: 'white', fontSize: '18px', transition: 'all 0.2s'
+  }}>
     <FaChevronLeft />
   </div>
 );
 
 const NextArrow = ({ onClick }) => (
-  <div onClick={onClick} style={{ ...arrowStyle, right: '10px' }}>
+  <div onClick={onClick} style={{
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: 2,
+    right: '16px', width: '44px', height: '44px',
+    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
+    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', color: 'white', fontSize: '18px', transition: 'all 0.2s'
+  }}>
     <FaChevronRight />
   </div>
 );
@@ -46,7 +46,8 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { user, ensureTokenValid } = useAuth();
-  const { setCartCount } = useCart(); // ✅
+  const { setCartCount } = useCart();
+  const [alert, setAlert] = useState({ message: "", type: "", visible: false, fading: false });
 
   const pageNumber = parseInt(searchParams.get("page")) || 1;
   const pageSize = parseInt(searchParams.get("pageSize")) || 12;
@@ -73,43 +74,16 @@ export default function Home() {
   };
 
   const handlePageChange = (newPage) => {
-    setSearchParams({
-      page: newPage,
-      pageSize,
-      keyword,
-      category,
-      sortedby,
-      isAdding,
-      minprice,
-      maxprice,
-    });
+    setSearchParams({ page: newPage, pageSize, keyword, category, sortedby, isAdding, minprice, maxprice });
   };
 
   const handleSortChange = (value) => {
     let [sortKey, direction] = value.split("-");
-    setSearchParams({
-      page: 1,
-      pageSize,
-      keyword,
-      category,
-      sortedby: sortKey,
-      isAdding: direction === "asc" ? "true" : "false",
-      minprice,
-      maxprice,
-    });
+    setSearchParams({ page: 1, pageSize, keyword, category, sortedby: sortKey, isAdding: direction === "asc" ? "true" : "false", minprice, maxprice });
   };
 
   const handleFilterPrice = () => {
-    setSearchParams({
-      page: 1,
-      pageSize,
-      keyword,
-      category,
-      sortedby,
-      isAdding,
-      minprice: minPriceInput,
-      maxprice: maxPriceInput,
-    });
+    setSearchParams({ page: 1, pageSize, keyword, category, sortedby, isAdding, minprice: minPriceInput, maxprice: maxPriceInput });
   };
 
   const handleResetFilter = () => {
@@ -118,16 +92,21 @@ export default function Home() {
     setMaxPriceInput("");
   };
 
+  const showAlert = (message, type = "success", duration = 3000) => {
+    setAlert({ message, type, visible: true, fading: false });
+    setTimeout(() => setAlert((prev) => ({ ...prev, fading: true })), duration - 500);
+    setTimeout(() => setAlert((prev) => ({ ...prev, visible: false, fading: false })), duration);
+  };
+
   const handleAddToCart = async (product) => {
-    // 👉 nó sẽ dừng ở đây khi bạn click
     try {
       if (!user) {
         addToLocalCart(product.productId, 1, (newCount) => {
-          setCartCount(newCount); // ✅ cập nhật context luôn
+          setCartCount(newCount);
         });
         setSelectedProduct(product);
         setShowModal(true);
-        return;
+        showAlert("✅ Thêm vào giỏ hàng thành công!", "success");
       }
 
       const token = await ensureTokenValid();
@@ -136,72 +115,62 @@ export default function Home() {
         navigate("/login");
         return;
       }
-      // 👇 Dừng ở đây để kiểm tra token, product
-      //debugger;
+
       const result = await addProductToCart(product.productId, 1, token);
       if (result.isSuccess) {
-        // ✅ GỌI LẠI API để lấy số lượng giỏ hàng thực sự từ server
         const res = await getCartItems(token);
-        const totalQuantity = res.data?.cartItems?.reduce(
-          (sum, item) => sum + item.soLuong,
-          0
-        );
+        const totalQuantity = res.data?.cartItems?.reduce((sum, item) => sum + item.soLuong, 0);
         setCartCount(totalQuantity || 0);
-
-         setSelectedProduct(product);
-        // **Thay đổi selectedProduct để lấy giá đã tính sẵn từ BE**
-        // setSelectedProduct({ // sửa 
-        //   ...product,
-        //   donGia: result.data.donGia ?? product.originalPrice
-        // });
+        setSelectedProduct(product);
         setShowModal(true);
+        showAlert("✅ Thêm vào giỏ hàng thành công!", "success");
       } else {
-        alert(result.message || "Thêm vào giỏ hàng thất bại.");
+        alert("Hết hàng rồi ");
       }
     } catch (error) {
-      alert(error.message || "Thêm vào giỏ hàng thất bại.");
+      showAlert(error.message || "❌ Có lỗi khi thêm vào giỏ hàng.", "danger");
     }
   };
 
   useEffect(() => {
     const filter = {
-      pageNumber,
-      pageSize,
-      keyword,
-      categoryId: category,
-      sortedby,
-      isAdding: isAdding === "true",
-      minprice,
-      maxprice,
+      pageNumber, pageSize, keyword, categoryId: category,
+      sortedby, isAdding: isAdding === "true", minprice, maxprice,
     };
-
     getPaginatedProducts(filter)
-      .then(data => {
-        setProducts(data.items);
-        setTotalItems(data.totalItems);
-      })
+      .then(data => { setProducts(data.items); setTotalItems(data.totalItems); })
       .catch(err => console.error("Lỗi:", err));
   }, [searchParams]);
 
+  const totalPages = Math.ceil(totalItems / pageSize);
+
   return (
     <UserLayout>
-      {/* Slider */}
-      <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
-        <Slider {...sliderSettings} className="custom-slider" dotsClass="slick-dots">
-          {['/img/slider1.webp', '/img/slider2.webp', '/img/slider3.webp', '/img/slider4.webp', '/img/slider5.webp'].map((img, i) => (
-            <div key={i}>
-              <img src={img} alt={`Slide ${i + 1}`} style={{ width: '100%', height: 'auto', borderRadius: '10px' }} />
-            </div>
-          ))}
-        </Slider>
-      </div>
+      {/* Alert Toast */}
+      {alert.visible && (
+        <div className={`cp-alert ${alert.type} ${alert.fading ? "fading" : ""}`}>
+          {alert.message}
+          <button className="cp-alert-close" onClick={() => setAlert({ ...alert, visible: false })}>✕</button>
+        </div>
+      )}
 
-      {/* Bộ lọc và sắp xếp */}
-      <div className="container mt-4">
-        <div className="row mb-3">
-          <div className="col-md-3">
+      <div className="cp-container">
+        {/* Hero Slider */}
+        <div className="cp-slider-wrap">
+          <Slider {...sliderSettings}>
+            {['/img/slider1.webp', '/img/slider2.webp', '/img/slider3.webp', '/img/slider4.webp', '/img/slider5.webp'].map((img, i) => (
+              <div key={i}>
+                <img src={img} alt={`Slide ${i + 1}`} />
+              </div>
+            ))}
+          </Slider>
+        </div>
+
+        {/* Filter & Sort Bar */}
+        <div className="cp-filter-bar">
+          <div className="cp-filter-group">
             <label>Sắp xếp:</label>
-            <select className="form-select" onChange={(e) => handleSortChange(e.target.value)} value={`${sortedby}-${isAdding === "true" ? "asc" : "desc"}`}>
+            <select onChange={(e) => handleSortChange(e.target.value)} value={`${sortedby}-${isAdding === "true" ? "asc" : "desc"}`}>
               <option value="">Mặc định</option>
               <option value="price-asc">Giá tăng dần</option>
               <option value="price-desc">Giá giảm dần</option>
@@ -210,130 +179,125 @@ export default function Home() {
             </select>
           </div>
 
-          <div className="col-md-3">
+          <div className="cp-filter-group">
             <label>Giá từ:</label>
-            <input type="number" className="form-control" value={minPriceInput} onChange={(e) => setMinPriceInput(e.target.value)} />
+            <input type="number" value={minPriceInput} onChange={(e) => setMinPriceInput(e.target.value)} placeholder="0" />
           </div>
 
-          <div className="col-md-3">
+          <div className="cp-filter-group">
             <label>Đến:</label>
-            <input type="number" className="form-control" value={maxPriceInput} onChange={(e) => setMaxPriceInput(e.target.value)} />
+            <input type="number" value={maxPriceInput} onChange={(e) => setMaxPriceInput(e.target.value)} placeholder="999.999" />
           </div>
 
-          <div className="col-md-3 d-flex align-items-end">
-            <button className="btn btn-primary w-100" onClick={handleFilterPrice}>
-              Lọc
-            </button>
-          </div>
-
-          <div className="col-md-3 d-flex align-items-end">
-            <button className="btn btn-outline-secondary w-100" onClick={handleResetFilter}>
-              Đặt lại bộ lọc
-            </button>
-          </div>
+          <button className="cp-btn-filter primary" onClick={handleFilterPrice}>Lọc</button>
+          <button className="cp-btn-filter secondary" onClick={handleResetFilter}>Đặt lại</button>
         </div>
-      </div>
 
-      {/* Danh sách sản phẩm */}
-      <div className='container mt-4'>
-        <div className='row'>
+        {/* Section Header */}
+        <div className="cp-section-header">
+          <h2 className="cp-section-title">Tất cả sản phẩm</h2>
+          <span className="cp-section-count">{totalItems} sản phẩm</span>
+        </div>
+
+        {/* Product Grid */}
+        <div className="cp-product-grid">
           {products.map(product => (
-            <div key={product.productId} className='col-md-3 mb-4'>
-              <div className='card h-100'>
-                <Link to={`/product/${product.productId}`} className="text-decoration-none text-dark">
-                  <img src={product.linkImage} className='card-img-top' alt={product.name} />
-                  <div className='card-body'>
-                    <h5 className='card-title'>{product.name}</h5>
-                    <p className='card-text'>{product.description}</p>
+            <div key={product.productId} className="cp-product-card">
+              <Link to={`/product/${product.productId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="cp-product-img-wrap">
+                  <img src={product.linkImage} alt={product.name} />
+                  {product.discountPercent > 0 && (
+                    <span className="cp-discount-badge">-{product.discountPercent}%</span>
+                  )}
+                </div>
+                <div className="cp-product-info">
+                  <span className="cp-product-category">{product.categoryName || ''}</span>
+                  <h3 className="cp-product-name">{product.name}</h3>
+                  <p className="cp-product-desc">{product.description}</p>
+                  <div className="cp-product-rating">
                     {product.rating ? (
-                      <div className='text-warning'>
-                        {product.rating} / 5 ({product.reviewCount} đánh giá)
-                      </div>
+                      <><FaStar /> {product.rating} / 5 ({product.reviewCount} đánh giá)</>
                     ) : (
-                      <div className='text-muted'>Chưa có đánh giá</div>
-                    )}
-                    {product.discountPercent ? (
-                      <>
-                        <span className="text-danger fw-bold">
-                          {product.disCountPrice.toLocaleString()}đ
-                        </span>
-                        <span className='text-muted text-decoration-line-through ms-2'>
-                          {product.originalPrice.toLocaleString()}đ
-                        </span>
-                      </>
-                    ) : (
-                      <span className='text-danger fw-bold'>{product.originalPrice.toLocaleString()}đ</span>
-                    )}
-
-                    {product.discountPercent && (
-                      <span className="badge bg-danger position-absolute top-0 start-0 m-2">-{product.discountPercent}%</span>
+                      <span style={{ color: '#9ca3af' }}>Chưa có đánh giá</span>
                     )}
                   </div>
-                </Link>
-                <button className='btn btn-primary mt-auto' onClick={() => handleAddToCart(product)}>
-                  Thêm hàng vào giỏ
+                  <div className="cp-product-prices">
+                    {product.discountPercent > 0 && (
+                      <span className="cp-price-original">{product.originalPrice.toLocaleString()}đ</span>
+                    )}
+                    <span className="cp-price-current">
+                      {(product.discountPercent > 0 ? product.disCountPrice : product.originalPrice).toLocaleString()}đ
+                    </span>
+                  </div>
+                </div>
+              </Link>
+              <div style={{ padding: '0 20px 20px' }}>
+                <button className="cp-btn-add-cart" onClick={() => handleAddToCart(product)}>
+                  <FaShoppingCart /> Thêm vào giỏ
                 </button>
               </div>
             </div>
           ))}
         </div>
+
+        {/* Empty State */}
+        {products.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#6b7280', fontSize: '18px' }}>
+            Không tìm thấy sản phẩm nào
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="cp-pagination">
+            <button className="cp-page-btn" disabled={pageNumber === 1} onClick={() => handlePageChange(pageNumber - 1)}>
+              ‹ Trước
+            </button>
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index}
+                className={`cp-page-btn ${pageNumber === index + 1 ? 'active' : ''}`}
+                onClick={() => handlePageChange(index + 1)}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button className="cp-page-btn" disabled={pageNumber === totalPages} onClick={() => handlePageChange(pageNumber + 1)}>
+              Sau ›
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Phân trang */}
-      <div className="text-center mt-4">
-        <button className="btn btn-outline-secondary me-2" disabled={pageNumber === 1} onClick={() => handlePageChange(pageNumber - 1)}>
-          Trang trước
-        </button>
-        {[...Array(Math.ceil(totalItems / pageSize))].map((_, index) => (
-          <button key={index} className={`btn btn-sm mx-1 ${pageNumber === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => handlePageChange(index + 1)}>
-            {index + 1}
-          </button>
-        ))}
-        <button className="btn btn-outline-secondary ms-2" disabled={pageNumber === Math.ceil(totalItems / pageSize)} onClick={() => handlePageChange(pageNumber + 1)}>
-          Trang sau
-        </button>
-      </div>
-
-      {/* Modal thông báo */}
+      {/* Add to Cart Modal */}
       {showModal && selectedProduct && (
-        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Đã thêm vào giỏ hàng</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-              </div>
-              <div className="modal-body d-flex align-items-center">
-                <img src={selectedProduct.linkImage} alt={selectedProduct.name} style={{ width: "100px", marginRight: "16px" }} />
-                <div>
-                  <p className="mb-1"><strong>{selectedProduct.name}</strong></p>
-                  <p className="mb-1 text-muted">{selectedProduct.description}</p>
-                  <p className="mb-1">
-                    <span className="text-danger fw-bold">
-                      {selectedProduct.discountPercent ? (
-                        <>
-                          <span className="text-danger fw-bold">
-                            {selectedProduct.disCountPrice.toLocaleString()}đ
-                          </span>
-                          <span className='text-muted text-decoration-line-through ms-2'>
-                            {selectedProduct.originalPrice.toLocaleString()}đ
-                          </span>
-                        </>
-                      ) : (
-                        <span className='text-danger fw-bold'>{selectedProduct.originalPrice.toLocaleString()}đ</span>
-                      )}
-                    </span>
-                  </p>
-
-                  <p className="mb-1">
-                    ⭐ {selectedProduct.rating ?? "Chưa có"} ({selectedProduct.reviewCount} đánh giá)
-                  </p>
+        <div className="cp-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="cp-modal-header">
+              <h5>✅ Đã thêm vào giỏ hàng</h5>
+              <button className="cp-modal-close" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            <div className="cp-modal-body">
+              <img src={selectedProduct.linkImage} alt={selectedProduct.name} />
+              <div>
+                <p style={{ fontWeight: 700, fontSize: '16px', color: '#2C2C2C', margin: '0 0 4px' }}>{selectedProduct.name}</p>
+                <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 8px' }}>{selectedProduct.description}</p>
+                <div className="cp-product-prices">
+                  {selectedProduct.discountPercent > 0 && (
+                    <span className="cp-price-original">{selectedProduct.originalPrice.toLocaleString()}đ</span>
+                  )}
+                  <span className="cp-price-current" style={{ fontSize: '18px' }}>
+                    {(selectedProduct.discountPercent > 0 ? selectedProduct.disCountPrice : selectedProduct.originalPrice).toLocaleString()}đ
+                  </span>
                 </div>
+                <p style={{ fontSize: '13px', color: '#f59e0b', marginTop: '6px' }}>
+                  ⭐ {selectedProduct.rating ?? "Chưa có"} ({selectedProduct.reviewCount} đánh giá)
+                </p>
               </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Tiếp tục mua sắm</button>
-                <Link to="/cart" className="btn btn-primary">Đi đến giỏ hàng</Link>
-              </div>
+            </div>
+            <div className="cp-modal-footer">
+              <button className="cp-btn cp-btn-secondary" onClick={() => setShowModal(false)}>Tiếp tục mua sắm</button>
+              <Link to="/cart" className="cp-btn cp-btn-primary">Đi đến giỏ hàng →</Link>
             </div>
           </div>
         </div>
