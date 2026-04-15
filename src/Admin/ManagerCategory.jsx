@@ -8,6 +8,11 @@ import {
   deleteCategory 
 } from "../Service/categoryApi";
 import { FiSearch, FiFilter, FiPlus, FiEdit2, FiTrash2, FiTag } from "react-icons/fi";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 const ManagerCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -64,33 +69,48 @@ const ManagerCategory = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) return alert("Tên danh mục không được để trống!");
+    if (!formData.name.trim()) return toast.error("Tên danh mục không được để trống!");
 
+    const loadingToast = toast.loading(editingCategory ? "Đang cập nhật..." : "Đang thêm mới...");
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.categoryid, formData);
-        alert("Cập nhật danh mục thành công!");
+        toast.success("Cập nhật danh mục thành công!", { id: loadingToast });
       } else {
         await addCategory(formData);
-        alert("Thêm danh mục thành công!");
+        toast.success("Thêm danh mục thành công!", { id: loadingToast });
       }
       closeForm();
       fetchCategories();
     } catch (error) {
       console.error("Lỗi lưu danh mục:", error);
-      alert("Lỗi khi lưu danh mục!");
+      toast.error("Lỗi khi lưu danh mục!", { id: loadingToast });
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này?")) return;
-    try {
-      await deleteCategory(id);
-      alert("Xóa danh mục thành công!");
-      fetchCategories();
-    } catch (error) {
-      console.error("Lỗi xóa danh mục:", error);
-      alert("Không thể xóa danh mục này!");
+  const handleDelete = async (id, name) => {
+    const result = await MySwal.fire({
+      title: "Xác nhận xóa?",
+      text: `Danh mục "${name}" và các sản phẩm liên quan sẽ bị ảnh hưởng!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Xóa ngay",
+      cancelButtonText: "Hủy",
+      borderRadius: "15px"
+    });
+
+    if (result.isConfirmed) {
+      const loadingToast = toast.loading("Đang xóa...");
+      try {
+        await deleteCategory(id);
+        toast.success("Xóa danh mục thành công!", { id: loadingToast });
+        fetchCategories();
+      } catch (error) {
+        console.error("Lỗi xóa danh mục:", error);
+        toast.error("Không thể xóa danh mục này!", { id: loadingToast });
+      }
     }
   };
 
@@ -166,7 +186,7 @@ const ManagerCategory = () => {
                         <button
                           className="btn-icon delete"
                           title="Xóa danh mục"
-                          onClick={() => handleDelete(category.categoryid)}
+                          onClick={() => handleDelete(category.categoryid, category.name)}
                         >
                           <FiTrash2 />
                         </button>
@@ -220,7 +240,7 @@ const ManagerCategory = () => {
                             </div>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary px-4 text-white" onClick={closeForm}>Hủy</button>
+                            <button type="button" className="btn btn-secondary px-4" onClick={closeForm}>Hủy</button>
                             <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>
                                 {editingCategory ? "Cập nhật" : "Thêm mới"}
                             </button>

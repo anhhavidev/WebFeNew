@@ -9,9 +9,12 @@ import AdminRoutes from "./Routes/AdminRoutes ";
 import ShipperRoutes from "./Routes/ShipperRoutes";
 import SellerRoutes from "./Routes/SellerRoutes";
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <>
+      <Toaster position="top-right" reverseOrder={false} />
       <PublicRoutes />
       <UserRoutes />
       <AdminRoutes />

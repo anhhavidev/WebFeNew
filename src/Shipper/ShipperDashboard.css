@@ -1,0 +1,235 @@
+/* ====================================================
+   Shipper Dashboard – Professional redesign
+   ==================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.sh-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+}
+
+/* ── Header ── */
+.sh-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.sh-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+}
+.sh-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* ── Success rate ring card ── */
+.sh-rate-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.sh-rate-ring { width: 60px; height: 60px; flex-shrink: 0; }
+.sh-ring-svg  { width: 100%; height: 100%; transform: rotate(-90deg); }
+.sh-ring-bg, .sh-ring-fill {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.sh-ring-bg   { stroke: #f1f5f9; }
+.sh-ring-fill { transition: stroke-dasharray 0.7s ease; }
+.sh-ring-text {
+  fill: #0f172a;
+  font-size: 8px;
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  dominant-baseline: middle;
+  text-anchor: middle;
+  transform: rotate(90deg) translate(0, -36px);
+}
+.sh-rate-info { display: flex; flex-direction: column; gap: 2px; }
+.sh-rate-label { font-size: 13px; font-weight: 700; color: #0f172a; }
+.sh-rate-sub   { font-size: 12px; color: #94a3b8; }
+
+/* ── Filter bar ── */
+.sh-filterbar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.sh-date-group { display: flex; flex-direction: column; gap: 5px; }
+.sh-date-group label {
+  font-size: 11px; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.sh-date-input {
+  padding: 9px 13px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.sh-date-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+  background: #fff;
+}
+.sh-date-arrow { font-size: 16px; color: #cbd5e1; align-self: flex-end; padding-bottom: 8px; }
+
+.sh-search-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 20px;
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px; font-weight: 700; font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(16,185,129,0.28);
+}
+.sh-search-btn:hover:not(:disabled) {
+  background: #059669; transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+}
+.sh-search-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* ── Error ── */
+.sh-error {
+  display: flex; align-items: center; gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 13px; font-weight: 500;
+}
+
+/* ── Spinners ── */
+.sh-spin, .sh-spin-lg {
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+.sh-spin    { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; }
+.sh-spin-lg { width: 22px; height: 22px; border: 2.5px solid #e2e8f0; border-top-color: #10b981; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Stat Cards ── */
+.sh-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 1000px) { .sh-stats { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 560px)  { .sh-stats { grid-template-columns: 1fr; } }
+
+.sh-stat-card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  transition: transform 0.22s, box-shadow 0.22s;
+  animation: fadeUp 0.35s ease both;
+}
+.sh-stat-card:nth-child(2) { animation-delay: .05s; }
+.sh-stat-card:nth-child(3) { animation-delay: .10s; }
+.sh-stat-card:nth-child(4) { animation-delay: .15s; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sh-stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.08); }
+
+.sh-stat-icon {
+  width: 42px; height: 42px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+}
+.sh-stat-value { font-size: 28px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.sh-stat-label {
+  font-size: 11px; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.sh-stat-bar-track {
+  height: 5px; width: 100%; background: #f1f5f9;
+  border-radius: 999px; overflow: hidden;
+  margin-top: 4px;
+}
+.sh-stat-bar-fill {
+  height: 100%; border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Chart card ── */
+.sh-chart-card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.sh-chart-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 18px;
+}
+.sh-chart-title { font-size: 15px; font-weight: 700; color: #0f172a; }
+.sh-chart-badge {
+  font-size: 11px; font-weight: 700; color: #10b981;
+  background: #d1fae5; padding: 3px 10px; border-radius: 999px;
+}
+.sh-chart-loading {
+  display: flex; align-items: center; gap: 10px;
+  height: 180px; justify-content: center;
+  color: #94a3b8; font-size: 14px;
+}
+.sh-chart-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; height: 200px;
+  color: #94a3b8; font-size: 13px;
+  border: 2px dashed #e2e8f0; border-radius: 12px;
+}
+
+/* ── Tooltip ── */
+.sh-tooltip {
+  background: #1e293b; border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  min-width: 160px;
+}
+.sh-tooltip-date { font-size: 11px; color: #94a3b8; margin-bottom: 8px; font-weight: 600; }
+.sh-tooltip-row  {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: #e2e8f0; font-weight: 500; margin-bottom: 4px;
+}
+.sh-tooltip-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sh-tooltip-name { flex: 1; }

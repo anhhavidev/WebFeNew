@@ -1,0 +1,266 @@
+/* ====================================================
+   Seller Dashboard – Professional redesign (no emoji)
+   ==================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.s-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+}
+
+/* ── Header ── */
+.s-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.s-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+}
+.s-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* ── Filter pills ── */
+.s-pills {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+.s-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.2s;
+}
+.s-pill:hover { background: rgba(255,255,255,0.6); color: #334155; }
+.s-pill.active {
+  background: #ffffff;
+  color: #6366f1;
+  box-shadow: 0 1px 6px rgba(99,102,241,0.18), 0 0 0 1px rgba(99,102,241,0.08);
+}
+
+/* ── Date picker bar ── */
+.s-datebar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  animation: slideDown 0.25s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.s-date-group { display: flex; flex-direction: column; gap: 5px; }
+.s-date-group label {
+  font-size: 11px; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.s-date-input {
+  padding: 9px 13px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.s-date-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  background: #fff;
+}
+.s-date-sep {
+  font-size: 16px;
+  color: #cbd5e1;
+  padding-bottom: 8px;
+  align-self: flex-end;
+}
+.s-apply-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(99,102,241,0.28);
+}
+.s-apply-btn:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
+
+/* ── Error ── */
+.s-error {
+  display: flex; align-items: center; gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 13px; font-weight: 500;
+}
+
+/* ── Loading ── */
+.s-loading {
+  display: flex; align-items: center; gap: 10px;
+  color: #94a3b8; font-size: 14px; padding: 32px 0;
+  justify-content: center;
+}
+.s-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Stat Cards ── */
+.s-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 860px) { .s-stats { grid-template-columns: 1fr; } }
+
+.s-stat-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  animation: fadeUp 0.35s ease both;
+}
+.s-stat-card:nth-child(2) { animation-delay: 0.05s; }
+.s-stat-card:nth-child(3) { animation-delay: 0.1s; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.s-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.s-stat-icon-wrap {
+  width: 46px; height: 46px; flex-shrink: 0;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.s-stat-body { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.s-stat-label { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.s-stat-value { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; }
+
+.s-stat-accent-bar {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  border-radius: 16px 0 0 16px;
+  opacity: 0.8;
+}
+
+/* ── Generic card ── */
+.s-card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.s-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.s-card-title { font-size: 15px; font-weight: 700; color: #0f172a; }
+.s-card-badge {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px;
+}
+.s-empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 160px;
+  color: #cbd5e1; font-size: 14px;
+  border: 2px dashed #e2e8f0; border-radius: 10px;
+}
+
+/* ── Tooltip ── */
+.s-tooltip {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+}
+.s-tooltip-date { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+.s-tooltip-val  { font-size: 14px; font-weight: 700; color: #fff; }
+
+/* ── Status progress list ── */
+.s-status-list { display: flex; flex-direction: column; gap: 18px; }
+.s-status-row  { display: flex; align-items: center; gap: 12px; }
+.s-status-meta {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 130px;
+}
+.s-status-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.s-status-name { font-size: 13px; font-weight: 600; color: #475569; flex: 1; }
+.s-status-pct  { font-size: 12px; color: #94a3b8; font-weight: 500; min-width: 32px; text-align: right; }
+.s-bar-track {
+  flex: 1; height: 8px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.s-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+.s-status-num { font-size: 14px; font-weight: 800; min-width: 28px; text-align: right; }

@@ -10,6 +10,11 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import useAuth from '../Hooks/useAuth';
 import "./AdminDashboard.css";
 import { FiSearch, FiFilter, FiPlus, FiEdit2, FiTrash2, FiUserCheck } from "react-icons/fi";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -44,8 +49,11 @@ const UserManagement = () => {
     if (!token) return;
 
     try {
-      const data = await getAllUsers(token);
-      setUsers(data);
+      const resp = await getAllUsers(token);
+      // Backend trả về dạng ResponeDTO<PageResult<...>> 
+      // vd: { isSuccess: true, data: { items: [...] } }
+      const userList = resp?.data?.items || resp?.data || resp || [];
+      setUsers(Array.isArray(userList) ? userList : []);
     } catch (error) {
       console.error("Lỗi khi tải danh sách người dùng:", error);
     } finally {
@@ -66,14 +74,15 @@ const UserManagement = () => {
     const token = await ensureTokenValid();
     if (!token) return;
 
+    const loadingToast = toast.loading(editingUserId ? "Đang cập nhật..." : "Đang thêm người dùng...");
     try {
       if (editingUserId) {
         if (!formData.password) delete formData.password;
         await updateUser(editingUserId, formData, token);
-        alert("Cập nhật người dùng thành công!");
+        toast.success("Cập nhật người dùng thành công!", { id: loadingToast });
       } else {
         await createUser(formData, token);
-        alert("Thêm người dùng thành công!");
+        toast.success("Thêm người dùng thành công!", { id: loadingToast });
       }
       setFormData({ hoTen: "", email: "", sdt: "", password: "", gioiTinh: true });
       setEditingUserId(null);
@@ -81,7 +90,7 @@ const UserManagement = () => {
       fetchUsers();
     } catch (error) {
       console.error("Lỗi khi lưu người dùng:", error);
-      alert("Đã xảy ra lỗi!");
+      toast.error("Đã xảy ra lỗi!", { id: loadingToast });
     }
   };
 
@@ -97,17 +106,32 @@ const UserManagement = () => {
     setShowFormModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return;
-    const token = await ensureTokenValid();
-    if (!token) return;
+  const handleDelete = async (id, name) => {
+    const result = await MySwal.fire({
+      title: "Xác nhận xóa?",
+      text: `Tài khoản của "${name}" sẽ bị xóa khỏi hệ thống!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Xóa ngay",
+      cancelButtonText: "Hủy",
+      borderRadius: "15px"
+    });
 
-    try {
-      await deleteUser(id, token);
-      alert("Xóa người dùng thành công!");
-      fetchUsers();
-    } catch (error) {
-      console.error("Lỗi khi xóa người dùng:", error);
+    if (result.isConfirmed) {
+      const token = await ensureTokenValid();
+      if (!token) return;
+
+      const loadingToast = toast.loading("Đang xóa người dùng...");
+      try {
+        await deleteUser(id, token);
+        toast.success("Xóa người dùng thành công!", { id: loadingToast });
+        fetchUsers();
+      } catch (error) {
+        console.error("Lỗi khi xóa người dùng:", error);
+        toast.error("Xóa thất bại", { id: loadingToast });
+      }
     }
   };
 
@@ -116,14 +140,15 @@ const UserManagement = () => {
     const token = await ensureTokenValid();
     if (!token) return;
 
+    const loadingToast = toast.loading("Đang thực hiện...");
     try {
       await assignRole(roleData.userId, roleData.roleName, token);
-      alert("Cấp quyền thành công!");
+      toast.success("Cấp quyền thành công!", { id: loadingToast });
       setShowRoleModal(false);
       fetchUsers();
     } catch (error) {
       console.error("Lỗi khi cấp quyền:", error);
-      alert("Lỗi cấp quyền");
+      toast.error("Lỗi cấp quyền", { id: loadingToast });
     }
   };
 
@@ -237,7 +262,7 @@ const UserManagement = () => {
                             <button
                                 className="btn-icon delete"
                                 title="Xóa người dùng"
-                                onClick={() => handleDelete(user.id)}
+                                onClick={() => handleDelete(user.id, user.hoTen)}
                             >
                                 <FiTrash2 />
                             </button>
@@ -295,7 +320,7 @@ const UserManagement = () => {
                             </div>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary px-4 text-white" onClick={() => setShowFormModal(false)}>Hủy</button>
+                            <button type="button" className="btn btn-secondary px-4" onClick={() => setShowFormModal(false)}>Hủy</button>
                             <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>{editingUserId ? "Cập nhật" : "Thêm mới"}</button>
                         </div>
                     </form>
@@ -330,7 +355,7 @@ const UserManagement = () => {
                             </div>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary px-4 text-white" onClick={() => setShowRoleModal(false)}>Hủy</button>
+                            <button type="button" className="btn btn-secondary px-4" onClick={() => setShowRoleModal(false)}>Hủy</button>
                             <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>Cấp quyền</button>
                         </div>
                     </form>

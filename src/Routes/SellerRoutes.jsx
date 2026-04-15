@@ -6,6 +6,8 @@ import PrivateSeller from "./PrivateSeller"
 import ProductManagerSeller from "../Seller/ProductManagerSeller";
 import OrderManagerSeller from "../Seller/OrderManagerSeller";
 import SellerDashboardChar from "../Seller/SellerDashboardChar";
+import UserProfile from "../Admin/UserProfile";
+
 const SellerRoutes = () => {
   return (
        
@@ -15,6 +17,7 @@ const SellerRoutes = () => {
                     <Route index element={<SellerDashboardChar/>} />
                     <Route path="products" element={<ProductManagerSeller />} />
                     <Route path="orders" element={<OrderManagerSeller />} />
+                    <Route path="profile" element={<UserProfile />} />
                 </Route>
             </Routes>
        

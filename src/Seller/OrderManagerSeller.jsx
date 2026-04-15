@@ -4,6 +4,9 @@ import { GetAvailableShippers, AssignShipperToOrder } from "../Service/Shipper/O
 import { UpdateOrderStatus } from "../Service/Seller/OrderSellerAPI";
 import useAuth from "../Hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import "../Admin/AdminDashboard.css";
+import { FiUser, FiMail, FiPhone, FiPackage, FiCreditCard, FiTruck, FiMapPin, FiShoppingCart, FiEye, FiCheck } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 export default function OrderManagerSeller() {
   const [orders, setOrders] = useState([]);
@@ -28,16 +31,16 @@ export default function OrderManagerSeller() {
         setOrders(
           data.items.map((item) => ({
             ...item,
-            originalStatus: item.status, // thêm trường 
+            originalStatus: item.status,
           }))
         );
         setTotalPages(data.totalPages);
 
-        // Lấy danh sách shipper khả dụng
         const shipperList = await GetAvailableShippers(token);
         setShippers(shipperList.data || []);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách đơn hàng:", error);
+        toast.error("Không thể tải danh sách đơn hàng");
       }
     };
 
@@ -49,6 +52,7 @@ export default function OrderManagerSeller() {
   };
 
   const handleViewOrder = async (orderId) => {
+    const loadingToast = toast.loading("Đang lấy chi tiết...");
     const token = await ensureTokenValid();
     if (!token) return;
 
@@ -56,120 +60,108 @@ export default function OrderManagerSeller() {
       const res = await getOrderDetaiSeller(orderId, token);
       if (res.isSuccess) {
         setSelectedOrder(res.data);
-        setShowModal(true); // mở modal
+        setShowModal(true);
+        toast.dismiss(loadingToast);
       } else {
-        alert(res.message || "Không thể lấy chi tiết đơn hàng.");
+        toast.error(res.message || "Không thể lấy chi tiết đơn hàng.", { id: loadingToast });
       }
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi lấy chi tiết đơn hàng.");
+      toast.error("Lỗi khi lấy chi tiết đơn hàng.", { id: loadingToast });
     }
   };
 
   function getPaymentStatusText(status) {
     switch (status) {
-      case "Unpaid":
-        return "Chưa thanh toán";
-      case "Paid":
-        return "Đã thanh toán";
-      case "Failed":
-        return "Thanh toán thất bại ";
-      default:
-        return status;
+      case "Unpaid": return "Chưa thanh toán";
+      case "Paid": return "Đã thanh toán";
+      case "Failed": return "Thanh toán thất bại";
+      default: return status;
     }
   }
-  function getStatusText(status) {
-    switch (status) {
-      case "Pending":
-        return "Chờ xác nhận";
-      case "Confirmed":
-        return "Đã xác nhận";
-      case "ReadyToShip":
-        return "Đang chờ Shipper lấy hàng ";
-      case "Assigned":
-        return "Shipper đã nhận hàng ";
-      case "Shipping":
-        return "Đang giao hàng";
-      case "Delivered":
-        return "Đã giao hàng";
-      case "Received":
-        return "Đã nhận hàng";
-      case "FailedDelivery":
-        return "Giao thất bại";
-      case "Cancelled":
-        return "Đã hủy";
 
-      default:
-        return status;
-    }
+  function getStatusText(status) {
+    const map = {
+        Pending: "Chờ xác nhận",
+        Confirmed: "Đã xác nhận",
+        ReadyToShip: "Chờ lấy hàng",
+        Assigned: "Đã gán shipper",
+        Shipping: "Đang giao",
+        Delivered: "Đã giao hàng",
+        Received: "Đã nhận hàng",
+        FailedDelivery: "Giao thất bại",
+        Cancelled: "Đã hủy"
+    };
+    return map[status] || status;
   }
+
   const handleUpdateStatus = async (orderId, newStatus, originalStatus, index) => {
     if (newStatus === originalStatus) {
-      alert("Bạn chưa thay đổi trạng thái.");
+      toast.error("Bạn chưa thay đổi trạng thái!");
       return;
     }
 
     const token = await ensureTokenValid();
-    if (!token) return;
+    const loadingToast = toast.loading("Đang cập nhật trạng thái...");
 
     try {
       const result = await UpdateOrderStatus(orderId, newStatus, token);
       if (result.isSuccess) {
-        alert("Cập nhật trạng thái thành công!");
+        toast.success("Cập nhật trạng thái thành công!", { id: loadingToast });
         setOrders((prev) => {
-          const updated = [...prev]; //tạo bảng sao mảng 
-          updated[index].status = newStatus; //tại vị trí index hình như là được chọn 
+          const updated = [...prev];
+          updated[index].status = newStatus;
           updated[index].originalStatus = newStatus;
           return updated;
         });
         setTempStatuses((prev) => {
-          const clone = { ...prev }; // tạo bản sao object , lưu trajgn thái cập nhập tạm thời khi người dùng chưa bấm lưu 
+          const clone = { ...prev };
           delete clone[index];
           return clone;
         });
       } else {
-        alert(result.message || "Cập nhật thất bại.");
+        toast.error(result.message || "Cập nhật thất bại.", { id: loadingToast });
       }
     } catch (err) {
       console.error(err);
-      alert("Cập nhật thất bại.");
+      toast.error("Cập nhật thất bại.", { id: loadingToast });
     }
   };
 
   const handleAssignShipper = async (orderId, shipperId, index) => {
     if (!shipperId) {
-      alert("Vui lòng chọn shipper!");
+      toast.error("Vui lòng chọn shipper!");
       return;
     }
 
     const token = await ensureTokenValid();
-    if (!token) return;
+    const loadingToast = toast.loading("Đang gán shipper...");
 
     try {
       const result = await AssignShipperToOrder(orderId, shipperId, token);
       if (result.isSuccess) {
-        alert("Gán shipper thành công!");
+        toast.success("Gán shipper thành công!", { id: loadingToast });
         setOrders((prev) => {
           const updated = [...prev];
           updated[index].assignedShipper = result.data?.fullName || "Đã gán shipper";
-          updated[index].status = "Assigned"; // ✅ vì backend set Assigned, không phải ReadyToShip
+          updated[index].status = "Assigned";
           updated[index].originalStatus = "Assigned";
           return updated;
         });
-        // ✅ Cập nhật activeOrderCount của shipper trong dropdown
-      setShippers((prev) =>
-        prev.map((s) =>
-          s.shipperId === shipperId
-            ? { ...s, activeOrderCount: (s.activeOrderCount || 0) + 1 }
-            : s
-        )
-      );
+        
+        setShippers((prev) =>
+          prev.map((s) =>
+            s.shipperId === shipperId
+              ? { ...s, activeOrderCount: (s.activeOrderCount || 0) + 1 }
+              : s
+          )
+        );
       } else {
-        alert(result.message || "Không thể gán shipper.");
+        toast.error(result.message || "Không thể gán shipper.", { id: loadingToast });
       }
     } catch (err) {
       console.error(err);
-      alert("Gán shipper thất bại.");
+      toast.error("Gán shipper thất bại.", { id: loadingToast });
     }
   };
 
@@ -208,7 +200,7 @@ export default function OrderManagerSeller() {
 
   return (
     <div className="container mt-4">
-      <h4 className="mb-3">📦 Quản lý đơn hàng</h4>
+      <h4 className="mb-3 d-flex align-items-center gap-2"><FiPackage className="text-primary"/> Quản lý đơn hàng</h4>
       <table className="table table-bordered align-middle text-center">
         <thead className="table-primary">
           <tr>
@@ -305,7 +297,7 @@ export default function OrderManagerSeller() {
                     className="btn btn-sm btn-primary me-1"
                     onClick={() => handleViewOrder(item.orderId)}
                   >
-                    🔍 Xem
+                    <FiEye className="me-1" /> Xem
                   </button>
 
                   {["Pending", "Confirmed"].includes(item.status) && item.paymentStatus !== "Failed" && (
@@ -339,15 +331,18 @@ export default function OrderManagerSeller() {
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
-                <p><strong>👤 Khách hàng:</strong> {selectedOrder.buyerName}</p>
-                <p><strong>📧 Email:</strong> {selectedOrder.buyerEmail}</p>
-                <p><strong>📞 SĐT:</strong> {selectedOrder.buyerPhone}</p>
-                <p><strong>📦 Trạng thái:</strong> {getStatusText(selectedOrder.status)}</p>
-                <p><strong>💰 Thanh toán:</strong> {getPaymentStatusText(selectedOrder.paymentStatus)}</p>
-                <p><strong>🚚 Phí vận chuyển:</strong> {selectedOrder.shippingFee.toLocaleString("vi-VN")}₫</p>
-                <p><strong>🏠 Địa chỉ:</strong> {selectedOrder.deliveryAddress}</p>
+                <p><strong><FiUser className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> Khách hàng:</strong> {selectedOrder.buyerName}</p>
+                <p><strong><FiMail className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> Email:</strong> {selectedOrder.buyerEmail}</p>
+                <p><strong><FiPhone className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> SĐT:</strong> {selectedOrder.buyerPhone}</p>
+                <p><strong><FiPackage className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> Trạng thái:</strong> {getStatusText(selectedOrder.status)}</p>
+                <p><strong><FiCreditCard className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> Thanh toán:</strong> {getPaymentStatusText(selectedOrder.paymentStatus)}</p>
+                <p><strong><FiTruck className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> Phí vận chuyển:</strong> {selectedOrder.shippingFee.toLocaleString("vi-VN")}₫</p>
+                <p><strong><FiMapPin className="text-primary me-2" style={{ fontSize: '1.1rem' }} /> Địa chỉ:</strong> {selectedOrder.deliveryAddress}</p>
 
-                <h6 className="mt-3">🛒 Sản phẩm:</h6>
+                <h6 className="mt-4 mb-3" style={{ fontWeight: 700, color: '#0f172a' }}>
+                  <FiShoppingCart className="text-primary me-2" style={{ fontSize: '1.2rem' }} /> 
+                  Sản phẩm:
+                </h6>
                 <table className="table table-bordered">
                   <thead>
                     <tr>

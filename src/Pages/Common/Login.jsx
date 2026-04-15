@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "./Login.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FiMail, FiLock, FiShoppingBag, FiArrowRight } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../Hooks/useAuth";
@@ -129,24 +130,33 @@ const Login = () => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h2 className={styles.title}>Sign In</h2>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {/* Brand icon */}
+        <div className={styles.brandIcon}>
+          <FiShoppingBag />
+        </div>
+        <h2 className={styles.title}>Chào mừng trở lại</h2>
+        <p className={styles.subtitle}>Đăng nhập để tiếp tục mua sắm</p>
+        {error && <div className={styles.error}>{error}</div>}
         <form onSubmit={handleLogin}>
+          {/* Email field with icon */}
           <div className={styles.inputGroup}>
+            <span className={styles.inputIcon}><FiMail /></span>
             <input
               type="email"
-              placeholder="Email"
-              className={styles.input}
+              placeholder="Địa chỉ Email"
+              className={`${styles.input} ${styles.inputWithIcon}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
+          {/* Password field with icons */}
           <div className={styles.inputGroup}>
+            <span className={styles.inputIcon}><FiLock /></span>
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className={styles.input}
+              placeholder="Mật khẩu"
+              className={`${styles.input} ${styles.inputWithIcon}`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -158,28 +168,24 @@ const Login = () => {
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
+          <div className={styles.textCenter} style={{ marginBottom: '20px', marginTop: '-6px' }}>
+            <Link to="/forgot-password" className={styles.link} style={{ fontSize: '0.82rem' }}>
+              Quên mật khẩu?
+            </Link>
+          </div>
           <div className={styles.inputGroup}>
             <button type="submit" className={styles.button}>
-              Login
+              Đăng nhập <FiArrowRight style={{ marginLeft: 6 }} />
             </button>
           </div>
         </form>
-        <div className={styles.inputGroup}>
-          {/* <button className={styles.googleButton} onClick={handleGoogleLogin}>
-            <FcGoogle className={styles.googleIcon} /> Sign in with Google
-          </button> */}
+        <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
           <GoogleOneTap />
-
         </div>
-        <div className={styles.textCenter}>
-          <Link to="/forgot-password" className={styles.link}>
-            Forgot Password?
-          </Link>
-
-        </div>
-        <div className={styles.textCenter}>
+        <div className={styles.textCenter} style={{ marginTop: '20px' }}>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.875rem' }}>Chưa có tài khoản? </span>
           <Link to="/Register" className={styles.link}>
-            Create an Account?
+            Đăng ký ngay
           </Link>
         </div>
       </div>

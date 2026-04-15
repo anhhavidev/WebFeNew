@@ -83,10 +83,9 @@ export default function SellerDashboard() {
                 <FiChevronDown color="#6b7280" />
               </button>
               <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2 rounded-3" aria-labelledby="sellerDropdown" style={{ minWidth: "200px" }}>
-                <li><Link className="dropdown-item py-2 d-flex align-items-center text-secondary" to="/seller/profile"><FiUser className="me-2" /> Hồ sơ cửa hàng</Link></li>
-                <li><Link className="dropdown-item py-2 d-flex align-items-center text-secondary" to="/seller/settings"><FiSettings className="me-2" /> Cài đặt</Link></li>
+                <li><Link className="dropdown-item py-2 d-flex align-items-center text-secondary" to="/seller/dashboard/profile"><FiUser className="me-2" /> Hồ sơ cửa hàng</Link></li>
                 <li><hr className="dropdown-divider my-1" /></li>
-                <li><Link className="dropdown-item py-2 d-flex align-items-center text-danger" to="/login" onClick={(e) => { e.preventDefault(); logout(); }}><FiLogOut className="me-2" /> Đăng xuất</Link></li>
+                <li><Link className="dropdown-item py-2 d-flex align-items-center text-danger" to="/login" onClick={() => logout()}><FiLogOut className="me-2" /> Đăng xuất</Link></li>
               </ul>
             </div>
           </div>

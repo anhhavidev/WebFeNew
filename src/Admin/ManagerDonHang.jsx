@@ -221,15 +221,6 @@ export default function ManagerDonHang() {
                                                 >
                                                     <FiEye />
                                                 </button>
-                                                <button 
-                                                    className="btn-icon delete" 
-                                                    title="Hủy đơn"
-                                                    onClick={() => handleCancelOrder(item.parentOrderId, index)}
-                                                    disabled={!["Pending", "Confirmed"].includes(item.status) || item.paymentStatus !== "Unpaid"}
-                                                    style={{ opacity: (!["Pending", "Confirmed"].includes(item.status) || item.paymentStatus !== "Unpaid") ? 0.5 : 1 }}
-                                                >
-                                                    <FiTrash2 />
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>

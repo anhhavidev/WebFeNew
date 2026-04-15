@@ -5,6 +5,7 @@ import ShipperDonHang from "../Admin/ShipperDashboard"; // giao diện Shipper
 import OrderManagerShipper from "../Shipper/OrderManagerShipper";
 import ShipperDashboard from "../Admin/ShipperDashboard";
 import ShipperDashboardChar from "../Shipper/ShipperDashboardChar";
+import UserProfile from "../Admin/UserProfile";
 
 const ShipperRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const ShipperRoutes = () => {
         <Route index element={<ShipperDashboardChar></ShipperDashboardChar>} />
         {/* <Route path="products" element={<P />} /> */}
         <Route path="orders" element={<OrderManagerShipper />} />
+        <Route path="profile" element={<UserProfile />} />
       </Route>
     </Routes>
   );

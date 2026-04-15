@@ -19,6 +19,8 @@ export default function Dashboard() {
     { path: "/admin/dashboard/orders", label: "Đơn hàng", icon: <FiShoppingCart /> },
     { path: "/admin/dashboard/users", label: "Người dùng", icon: <FiUsers /> },
     { path: "/admin/dashboard/category", label: "Quản lý loại", icon: <FiLayers /> },
+    { path: "/admin/dashboard/profile", label: "Hồ sơ cá nhân", icon: <FiUser /> },
+    { path: "/admin/dashboard/ai-insights", label: "🤖 AI Insights", icon: null },
   ];
 
   const isActive = (item) => {
@@ -74,7 +76,7 @@ export default function Dashboard() {
                 aria-expanded="false"
               >
                 <div className="header-user-info">
-                  <p className="header-user-name">{user?.hoTen || 'Admin'}</p>
+                  <p className="header-user-name">{user?.fullName || user?.hoTen || 'Admin'}</p>
                   <p className="header-user-role">Quản trị viên</p>
                 </div>
                 <div className="header-avatar">
@@ -83,11 +85,9 @@ export default function Dashboard() {
                 <FiChevronDown style={{ color: '#6b7280', fontSize: '0.8rem' }} />
               </button>
               <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                <li><Link className="dropdown-item" to="/admin/profile">👤 Thông tin cá nhân</Link></li>
-                <li><Link className="dropdown-item" to="/admin/settings">⚙️ Cài đặt tài khoản</Link></li>
-                <li><Link className="dropdown-item" to="/admin/switch-role">🔄 Chuyển vai trò</Link></li>
+                <li><Link className="dropdown-item py-2" to="/admin/dashboard/profile">👤 Thông tin cá nhân</Link></li>
                 <li><hr className="dropdown-divider" /></li>
-                <li><Link className="dropdown-item text-danger" to="/login" onClick={(e) => { e.preventDefault(); logout(); }}>🚪 Đăng xuất</Link></li>
+                <li><Link className="dropdown-item py-2 text-danger fw-medium" to="/login" onClick={() => logout()}>🚪 Đăng xuất</Link></li>
               </ul>
             </div>
           </div>

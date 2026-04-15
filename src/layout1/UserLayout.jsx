@@ -4,6 +4,7 @@ import { faSearch, faBell, faShoppingCart } from '@fortawesome/free-solid-svg-ic
 import logo from "../Assets/img/pngtree-salon-logo-png-image_4004444-removebg-preview.png";
 import Navitation from '../Components/Navitation';
 import Footer from './Footer';
+import AiChatbot from '../Components/Chatbot/AiChatbot';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../Hooks/useAuth';
 import { useCart } from "../constants/CartContext";
@@ -155,6 +156,7 @@ export default function UserLayout({ children }) {
       </main>
 
       <Footer />
+      <AiChatbot />
     </>
   );
 }

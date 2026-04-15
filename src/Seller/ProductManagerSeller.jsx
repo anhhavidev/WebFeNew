@@ -4,82 +4,77 @@ import {
   getPaginatedProducSeller,
   deleteProduct,
   getCategories,
-  addProduct, updateProduct , getProductById
+  addProduct, updateProduct, getProductById
 } from "../Service/ProductApi";
 import "../Admin/ProductManagement.css";
 import ProductForm from "../Admin/Helpper/ProductForm";
+import { FiEye, FiEdit, FiTrash2, FiSearch, FiFilter, FiPlus } from "react-icons/fi";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
+
 const ProductManagerSeller = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProductId, setEditingProductId] = useState(null);
-  // Bộ lọc
-  // State cho input tạm
+  // ... (giữ nguyên các state lọc)
   const [searchInput, setSearchInput] = useState("");
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [statusInput, setStatusInput] = useState("");
 
-  // State filter thật sự để fetch
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [minPrice, setMinPrice] = useState(null);
   const [maxPrice, setMaxPrice] = useState(null);
 
-
-  // Khi nhấn Tìm
   const handleFilter = () => {
     setSearch(searchInput);
     setCategory(categoryInput);
     setStatus(statusInput);
-
-    // Ép kiểu sang số hoặc null nếu rỗng
     setMinPrice(minPriceInput.trim() !== "" ? Number(minPriceInput) : null);
     setMaxPrice(maxPriceInput.trim() !== "" ? Number(maxPriceInput) : null);
-
-    setPageIndex(1); // reset về trang đầu
-  };
-  /// resestfillter 
-  const handleResetFilters = () => {
-    setSearchInput("");
-    setCategoryInput("");
-    setStatusInput("");
-    setMinPriceInput("");
-    setMaxPriceInput("");
-
-    setSearch("");
-    setCategory("");
-    setStatus("");
-    setMinPrice(null);
-    setMaxPrice(null);
-
     setPageIndex(1);
   };
-  // mở đóng form 
+
+  const handleResetFilters = () => {
+    setSearchInput(""); setCategoryInput(""); setStatusInput(""); setMinPriceInput(""); setMaxPriceInput("");
+    setSearch(""); setCategory(""); setStatus(""); setMinPrice(null); setMaxPrice(null);
+    setPageIndex(1);
+  };
+
   const [showForm, setShowForm] = useState(false);
-  // const [editingProduct, setEditingProduct] = useState(null);
+  
   const handleAdd = () => {
-    setEditingProductId(null);   // Thêm mới → không có dữ liệu cũ
+    setEditingProductId(null);
     setShowForm(true);
   };
 
   const handleEdit = (product) => {
-    setEditingProductId(product.productId); // Sửa → truyền dữ liệu sản phẩm
+    setEditingProductId(product.productId);
     setShowForm(true);
   };
+
   const handleSave = async (data) => {
+    const loadingToast = toast.loading("Đang lưu sản phẩm...");
     try {
       if (editingProductId) {
         await updateProduct(editingProductId, data);
+        toast.success("Cập nhật thành công!", { id: loadingToast });
       } else {
         await addProduct(data);
+        toast.success("Đã thêm sản phẩm mới thành công!", { id: loadingToast });
       }
       setShowForm(false);
       fetchData();
     } catch (error) {
       console.error("Lỗi lưu sản phẩm:", error);
+      toast.error("Thao tác thất bại!", { id: loadingToast });
     }
   };
 
@@ -93,62 +88,77 @@ const ProductManagerSeller = () => {
 
   useEffect(() => {
     fetchData();
-  }, [search, category, status, minPrice, maxPrice, pageNumber]); // một trong những dk thay đổi htif ohji lại 
+  }, [search, category, status, minPrice, maxPrice, pageNumber]); 
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Lấy danh mục (gọi 1 lần thôi)
       if (categories.length === 0) {
         const catData = await getCategories();
         setCategories(catData.data);
       }
 
-      // Gửi filter khớp BE
       const filter = {
         pageSize,
         pageNumber,
-        keyword: search,      // FE: search -> BE: keyword
-        CategoryId: category, // FE: category -> BE: CategoryId
+        keyword: search,
+        CategoryId: category,
         minprice: minPrice,
         maxprice: maxPrice,
-        sortedby: null,       // (nếu chưa dùng thì để null hoặc bỏ)
-        isAdding: true,        // hoặc false, tuỳ nhu cầu
-        status: status ? parseInt(status) : null // 👈 FE gửi số, BE bind vào enum
+        sortedby: null,
+        isAdding: true,
+        status: status ? parseInt(status) : null
       };
-
-      //'http://localhost:5230/api/Product/paging?pageIndex=1&pageSize=8'
 
       const productData = await getPaginatedProducSeller(filter);
       setProducts(productData.items || []);
-      setTotalPages(productData.totalPages || 1); // giả sử BE trả về totalPages
+      setTotalPages(productData.totalPages || 1);
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
+      toast.error("Không thể tải sản phẩm");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) {
+  const handleDelete = async (id, name) => {
+    const result = await MySwal.fire({
+      title: "Xác nhận xóa?",
+      text: `Sản phẩm "${name}" sẽ bị xóa vĩnh viễn!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Xóa ngay",
+      cancelButtonText: "Hủy",
+      borderRadius: "15px"
+    });
+
+    if (result.isConfirmed) {
+      const loadingToast = toast.loading("Đang xóa...");
       try {
         await deleteProduct(id);
+        toast.success("Đã xóa sản phẩm thành công!", { id: loadingToast });
         fetchData();
       } catch (error) {
         console.error("Lỗi xóa sản phẩm:", error);
+        toast.error("Xóa sản phẩm thất bại", { id: loadingToast });
       }
     }
   };
 
-  if (loading) return <div className="p-3">Đang tải sản phẩm...</div>;
+  if (loading) return <div className="p-3 text-center">Đang tải sản phẩm...</div>;
+
   const handleView = async (id) => {
+    const loadingToast = toast.loading("Đang lấy thông tin...");
     try {
       const data = await getProductById(id);
       setSelectedProduct(data);
       setShowViewModal(true);
+      toast.dismiss(loadingToast);
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi lấy chi tiết sản phẩm");
+      toast.error("Lỗi khi lấy chi tiết sản phẩm", { id: loadingToast });
     }
   };
 

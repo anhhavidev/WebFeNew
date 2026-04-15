@@ -20,6 +20,7 @@ export default function useAuth() {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("chatSessionId");
     setUser(null);
     console.warn("🚪 Đã logout vì token hết hạn hoặc lỗi.");
   };

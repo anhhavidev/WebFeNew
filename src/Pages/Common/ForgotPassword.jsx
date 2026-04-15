@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './ForgotPassword.css';
 import { useNavigate } from 'react-router-dom';
+import { FiMail, FiKey, FiLock, FiShield, FiArrowRight, FiRefreshCw } from 'react-icons/fi';
 const ForgotPassword = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -77,18 +78,29 @@ const ForgotPassword = () => {
   return (
     <div className="forgot-container">
       <div className="forgot-box">
-        <h2>🔐 Quên mật khẩu</h2>
+        {/* Brand icon */}
+        <div className="forgot-brand-icon">
+          <FiShield />
+        </div>
+        <h2>Quên mật khẩu?</h2>
+        <p className="subtitle">Nhập email để nhận mã OTP đặt lại mật khẩu</p>
         {message && <p className={`message ${otpLocked ? 'error' : ''}`}>{message}</p>}
 
         {step === 1 && (
           <>
-            <input
-              type="email"
-              placeholder="📧 Nhập email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <button onClick={sendOtp}>Gửi mã OTP</button>
+            <div className="forgot-input-wrap">
+              <span className="forgot-input-icon"><FiMail /></span>
+              <input
+                type="email"
+                placeholder="Nhập địa chỉ Email của bạn"
+                className="forgot-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <button onClick={sendOtp}>
+              Gửi mã OTP <FiArrowRight style={{ marginLeft: 6 }} />
+            </button>
           </>
         )}
 
@@ -96,33 +108,40 @@ const ForgotPassword = () => {
           <>
             {!otpLocked ? (
               <>
-                <input
-                  type="text"
-                  placeholder="🔢 Nhập mã OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                />
-                <button onClick={verifyOtp}>Xác minh OTP</button>
+                <div className="forgot-input-wrap">
+                  <span className="forgot-input-icon"><FiKey /></span>
+                  <input
+                    type="text"
+                    placeholder="Nhập mã OTP"
+                    className="forgot-input"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                  />
+                </div>
+                <button onClick={verifyOtp}>
+                  Xác minh OTP <FiArrowRight style={{ marginLeft: 6 }} />
+                </button>
               </>
             ) : (
               <div className="lock-box">
-                <div className="lock-icon">🔒</div>
+                <div className="lock-icon"><FiLock /></div>
                 <h3>OTP đã bị khóa</h3>
                 <p>Bạn đã nhập sai quá số lần, vui lòng gửi OTP mới để tiếp tục.</p>
                 <div className="lock-actions">
-                  <button onClick={sendOtp}>Gửi OTP mới</button>
+                  <button onClick={sendOtp}>
+                    <FiRefreshCw style={{ marginRight: 6 }} /> Gửi OTP mới
+                  </button>
                   <button
                     className="link"
                     onClick={() => {
                       setStep(1);
-                      setMessage("");      // ✅ Xóa thông báo lỗi cũ
-                      setOtp("");          // ✅ Xóa mã OTP đang nhập
-                      setOtpLocked(false); // ✅ Mở khóa OTP nếu bị khóa
+                      setMessage("");
+                      setOtp("");
+                      setOtpLocked(false);
                     }}
                   >
                     Đổi email
                   </button>
-
                 </div>
               </div>
             )}
@@ -131,13 +150,19 @@ const ForgotPassword = () => {
 
         {step === 3 && (
           <>
-            <input
-              type="password"
-              placeholder="🔑 Nhập mật khẩu mới"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <button onClick={resetPassword}>Đặt lại mật khẩu</button>
+            <div className="forgot-input-wrap">
+              <span className="forgot-input-icon"><FiLock /></span>
+              <input
+                type="password"
+                placeholder="Nhập mật khẩu mới"
+                className="forgot-input"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <button onClick={resetPassword}>
+              Đặt lại mật khẩu <FiArrowRight style={{ marginLeft: 6 }} />
+            </button>
           </>
         )}
       </div>

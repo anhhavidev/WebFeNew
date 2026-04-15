@@ -138,8 +138,8 @@ const ProductForm = ({ categories, productId, onSave, onCancel }) => {
     e.preventDefault();
     // onSave(formData); // truyền object chứ không phải FormData
     const payload = { ...formData };
-  if (!productId) delete payload.productId;
-  onSave(payload);
+    if (!productId) delete payload.productId;
+    onSave(payload);
   };
 
   return (
