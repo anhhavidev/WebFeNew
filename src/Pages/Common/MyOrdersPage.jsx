@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { OrderApi } from "../../Service/OrderAPI"
 import UserLayout from "../../layout1/UserLayout";
-import CountdownTimer from "../../utils/CountdownTimer"; // hoặc đúng đường dẫn bạn lưu
-import useAuth from "../../Hooks/useAuth"; // hoặc đúng đường dẫn file bạn lưu
+import CountdownTimer from "../../utils/CountdownTimer"; 
+import useAuth from "../../Hooks/useAuth"; 
+import Swal from "sweetalert2";
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -58,7 +59,20 @@ export default function MyOrdersPage() {
     fetchOrders();
   }, [pageNumber]);
   async function handleConfirmDelivery(orderId) {
-    if (!window.confirm("Bạn chắc chắn đã nhận được hàng?")) return;
+    const result = await Swal.fire({
+      title: 'Xác nhận nhận hàng?',
+      text: "Bạn chắc chắn đã nhận được toàn bộ gói hàng này?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Đã nhận hàng',
+      cancelButtonText: 'Chưa',
+      background: '#fff',
+      borderRadius: '15px'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = await ensureTokenValid();
@@ -74,7 +88,13 @@ export default function MyOrdersPage() {
 
       const data = await res.json();
       if (data.isSuccess) {
-        alert("Cảm ơn bạn đã xác nhận!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Cảm ơn bạn đã xác nhận nhận hàng!',
+          timer: 2000,
+          showConfirmButton: false
+        });
         setOrders((prev) =>
           prev.map((o) =>
             o.orderId === orderId
@@ -83,15 +103,28 @@ export default function MyOrdersPage() {
           )
         );
       } else {
-        alert(data.message || "Có lỗi xảy ra");
+        Swal.fire('Lỗi', data.message || "Có lỗi xảy ra", 'error');
       }
     } catch (err) {
-      alert("Lỗi kết nối máy chủ");
+      Swal.fire('Lỗi', "Lỗi kết nối máy chủ", 'error');
     }
   }
 
   async function handleCancelOrder(orderId) {
-    if (!window.confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
+    const result = await Swal.fire({
+      title: 'Huỷ đơn hàng?',
+      text: "Bạn có chắc chắn muốn huỷ đơn hàng này không?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Đúng, huỷ ngay',
+      cancelButtonText: 'Không, giữ lại',
+      background: '#fff',
+      borderRadius: '15px'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = await ensureTokenValid();
@@ -108,7 +141,13 @@ export default function MyOrdersPage() {
       const data = await res.json();
 
       if (data.isSuccess) {
-        alert("Đã huỷ đơn hàng");
+        Swal.fire({
+          icon: 'success',
+          title: 'Đã huỷ',
+          text: 'Đơn hàng của bạn đã được huỷ thành công.',
+          timer: 2000,
+          showConfirmButton: false
+        });
         setOrders((prev) =>
           prev.map((o) =>
             o.parentOrderId === orderId
@@ -117,10 +156,10 @@ export default function MyOrdersPage() {
           )
         );
       } else {
-        alert(data.message || "Không thể huỷ đơn");
+        Swal.fire('Thất bại', data.message || "Không thể huỷ đơn", 'error');
       }
     } catch (err) {
-      alert("Lỗi kết nối máy chủ");
+      Swal.fire('Lỗi', "Lỗi kết nối máy chủ", 'error');
     }
   }
 

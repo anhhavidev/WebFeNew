@@ -13,12 +13,17 @@ import {
 } from 'react-icons/fi';
 import './ProductDetail.css';
 
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, ensureTokenValid } = useAuth();
   const { setCartCount } = useCart();
-
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,27 +50,58 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = async () => {
+    if (!user) {
+      const result = await MySwal.fire({
+        title: "Bạn chưa đăng nhập",
+        text: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Đăng nhập ngay",
+        cancelButtonText: "Để sau",
+        confirmButtonColor: "#2563eb",
+        cancelButtonColor: "#64748b",
+        borderRadius: "15px"
+      });
+
+      if (result.isConfirmed) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    const loadingToast = toast.loading("Đang thêm vào giỏ...");
     try {
-      if (!user) {
-        addToLocalCart(product.productId, qty, newCount => setCartCount(newCount));
-        setAddedToCart(true);
-        showAlert('Đã thêm vào giỏ hàng!');
+      const token = await ensureTokenValid();
+      if (!token) {
+        toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
+        navigate("/login");
         return;
       }
-      const token = await ensureTokenValid();
-      if (!token) { navigate('/login'); return; }
+
       const result = await addProductToCart(product.productId, qty, token);
       if (result.isSuccess) {
         const res = await getCartItems(token);
-        const total = res.data?.cartItems?.reduce((s, i) => s + i.soLuong, 0);
-        setCartCount(total || 0);
+        const sellerGroups = res.data?.sellerGroups || [];
+        let total = 0;
+        sellerGroups.forEach(group => {
+          if (group.cartItems) {
+            group.cartItems.forEach(item => {
+              total += item.soLuong;
+            });
+          }
+        });
+        setCartCount(total);
         setAddedToCart(true);
-        showAlert('Đã thêm vào giỏ hàng!');
+        toast.success("Đã thêm vào giỏ hàng!", { id: loadingToast });
+        showAlert("Đã thêm vào giỏ hàng!");
       } else {
-        showAlert('Hết hàng hoặc có lỗi xảy ra.', 'error');
+        toast.error(result.message || "Hết hàng hoặc lỗi.", { id: loadingToast });
+        showAlert("Lỗi khi thêm vào giỏ hàng.", "error");
       }
-    } catch {
-      showAlert('Có lỗi khi thêm vào giỏ hàng.', 'error');
+    } catch (err) {
+      console.error(err);
+      toast.error("Thao tác thất bại.", { id: loadingToast });
+      showAlert("Có lỗi xảy ra.", "error");
     }
   };
 

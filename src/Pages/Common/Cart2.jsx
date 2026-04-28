@@ -9,6 +9,8 @@ import UpdateType from "../../constants/updateTypes";
 import useAuth from '../../Hooks/useAuth';
 import { useCart } from "../../constants/CartContext";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
@@ -20,7 +22,7 @@ export default function Cart() {
   const handleBuyNow = () => {
     const selected = cartItems.filter(item => item.isChecked);
     if (selected.length === 0) {
-      alert("❌ Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
+      toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
       return;
     }
     navigate("/checkout", { state: { selectedItems: selected } });
@@ -39,7 +41,7 @@ export default function Cart() {
         debouncedItem.quantity,
         token,
         debouncedItem.updateType
-      ).catch(err => alert("Cập nhật thất bại: " + err.message));
+      ).catch(err => toast.error("Cập nhật thất bại: " + err.message));
 
       setDebouncedItem(null);
     }, 500);
@@ -92,10 +94,10 @@ export default function Cart() {
         // ✅ Chỉ hiện alert khi là lỗi xác thực hoặc lỗi server thật
         const status = err?.response?.status;
         if (status === 401 || status === 403) {
-          alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
           window.location.href = "/login";
         } else {
-          alert("Đã xảy ra lỗi khi tải giỏ hàng.");
+          toast.error("Đã xảy ra lỗi khi tải giỏ hàng.");
         }
       }
     };
@@ -123,7 +125,14 @@ export default function Cart() {
   };
 
   const handleDelete = async (itemId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?")) return;
+    const confirm = await Swal.fire({
+      title: 'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy'
+    });
+    if (!confirm.isConfirmed) return;
 
     const updatedItems = cartItems.filter(item => item.cartItemId !== itemId);
     setCartItems(updatedItems);
@@ -136,8 +145,9 @@ export default function Cart() {
       if (!token) return;
 
       await removeFromCart(itemId, token);
+      toast.success("Đã xoá khỏi giỏ hàng!");
     } catch (err) {
-      alert("Xóa thất bại: " + err.message);
+      toast.error("Xóa thất bại: " + err.message);
     }
   };
 
@@ -146,7 +156,7 @@ export default function Cart() {
     if (!item) return;
 
     if (currentQuantity + 1 > item.availableStock) {
-      alert(`Chỉ còn ${item.availableStock} sản phẩm`);
+      toast.error(`Chỉ còn ${item.availableStock} sản phẩm`);
       return;
     }
 
@@ -167,13 +177,13 @@ export default function Cart() {
       const totalQuantity = updated.reduce((sum, i) => sum + i.quantity, 0);
       setCartCount(totalQuantity);
     } catch (err) {
-      alert("Cập nhật thất bại: " + err.message);
+      toast.error("Cập nhật thất bại: " + err.message);
     }
   };
 
   const handleDecrease = async (itemId, currentQuantity) => {
     if (currentQuantity <= 1) {
-      alert("Số lượng tối thiểu là 1");
+      toast.error("Số lượng tối thiểu là 1");
       return;
     }
 
@@ -204,12 +214,12 @@ export default function Cart() {
     if (!item) return;
 
     if (quantity <= 0) {
-      alert("Số lượng tối thiểu là 1");
+      toast.error("Số lượng tối thiểu là 1");
       return;
     }
 
     if (quantity > item.availableStock) {
-      alert(`Chỉ còn lại ${item.availableStock} sản phẩm trong kho`);
+      toast.error(`Chỉ còn lại ${item.availableStock} sản phẩm trong kho`);
       const updated = cartItems.map(i =>
         i.cartItemId === itemId
           ? { ...i, localQuantity: 1 }

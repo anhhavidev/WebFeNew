@@ -1,6 +1,8 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import UserLayout from '../../layout1/UserLayout';
+import { FaCheckCircle, FaTimesCircle, FaReceipt, FaUndo } from 'react-icons/fa';
+import styles from './VnpayResultPage.module.css';
 
 export default function PaymentResultPage() {
   const { search } = useLocation();
@@ -13,22 +15,55 @@ export default function PaymentResultPage() {
 
   return (
     <UserLayout>
-      <div className="container my-5">
-        <div className="card p-4 shadow" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <h3 className={`text-center ${success ? 'text-success' : 'text-danger'}`}>
-            {success ? '✅ Thanh toán thành công' : '❌ Thanh toán thất bại'}
-          </h3>
-
-          <hr />
-
-          <div>
-            <p><strong>Mã đơn hàng:</strong> {orderId}</p>
-            <p><strong>Mã giao dịch:</strong> {transactionId}</p>
-            <p><strong>Mã phản hồi VNPAY:</strong> {vnPayCode}</p>
+      <div className={styles.resultContainer}>
+        <div className={styles.resultCard}>
+          <div className={styles.iconWrapper}>
+            {success ? (
+              <FaCheckCircle className={styles.successIcon} />
+            ) : (
+              <FaTimesCircle className={styles.errorIcon} />
+            )}
           </div>
 
-          <div className="text-center mt-4">
-            <a href="/" className="btn btn-primary">Về trang chủ</a>
+          <h1 className={styles.title}>
+            {success ? 'Thanh toán thành công!' : 'Thanh toán thất bại'}
+          </h1>
+          <p className="text-muted">
+            {success 
+              ? 'Cảm ơn bạn đã tin tưởng mua sắm tại cửa hàng của chúng tôi.' 
+              : 'Giao dịch của bạn không thể hoàn tất. Vui lòng thử lại hoặc chọn phương thức khác.'}
+          </p>
+
+          <div className={styles.infoList}>
+            <div className={styles.infoItem}>
+              <span className={styles.label}>Mã đơn hàng:</span>
+              <span className={styles.value}>#{orderId}</span>
+            </div>
+            {transactionId && (
+              <div className={styles.infoItem}>
+                <span className={styles.label}>Mã giao dịch:</span>
+                <span className={styles.value}>{transactionId}</span>
+              </div>
+            )}
+            <div className={styles.infoItem}>
+              <span className={styles.label}>Phản hồi VNPAY:</span>
+              <span className={styles.value}>{vnPayCode}</span>
+            </div>
+          </div>
+
+          <div className={styles.actions}>
+            <Link to="/" className={styles.btnHome}>
+              Tiếp tục mua sắm
+            </Link>
+            {success ? (
+              <Link to={`/user/orders/${orderId}`} className={styles.btnOrder}>
+                <FaReceipt className="me-1" /> Chi tiết đơn hàng
+              </Link>
+            ) : (
+              <Link to={`/payment/retry/${orderId}`} className={styles.btnOrder}>
+                <FaUndo className="me-1" /> Thử lại
+              </Link>
+            )}
           </div>
         </div>
       </div>

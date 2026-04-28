@@ -12,7 +12,7 @@ const ForgotPassword = () => {
   const navigate = useNavigate(); // ✅ Hook điều hướng
   // Gửi OTP
   const sendOtp = async () => {
-    const res = await fetch('http://localhost:5230/api/Acount/forgot-password', {
+    const res = await fetch('http://localhost:5230/api/Account/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -31,7 +31,7 @@ const ForgotPassword = () => {
   const verifyOtp = async () => {
     if (otpLocked) return;
 
-    const res = await fetch('http://localhost:5230/api/Acount/verify-otp', {
+    const res = await fetch('http://localhost:5230/api/Account/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, otp }),
@@ -62,7 +62,7 @@ const ForgotPassword = () => {
 
   // Đặt lại mật khẩu
   const resetPassword = async () => {
-    const res = await fetch('http://localhost:5230/api/Acount/reset-password', {
+    const res = await fetch('http://localhost:5230/api/Account/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, newPassword }),

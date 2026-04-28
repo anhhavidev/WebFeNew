@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5230/api/Acount"; // 👈 thay đúng baseUrl backend của bạn
+const API_URL = "http://localhost:5230/api/Account"; // 👈 Sửa lỗi chính tả Acount -> Account để khớp với Backend mới
 
 // Cập nhật thông tin user
 export const updateProfile = async (token, data) => {

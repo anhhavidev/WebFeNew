@@ -3,9 +3,11 @@ import { GetAllUserAddresses, AddUserAddress } from "../../Service/addressApi";
 import { checkoutOrder } from "../../Service/CheckoutApi";
 import styles from "./CheckoutPage.module.css";
 import UserLayout from "../../layout1/UserLayout";
-import { getCartItems } from "../../Service/cartApi";
+import { getCartItems, removeFromCart } from "../../Service/cartApi";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { getProvinces, getDistricts, getWards } from "../../Service/locationApi";
-import { calculateShipping  } from "../../Service/shippingApi";
+import { calculateShipping } from "../../Service/shippingApi";
 import { useLocation } from "react-router-dom";
 import { DeleteAddress, UpdateAddress } from "../../Service/addressApi"
 import { useParams, useNavigate } from "react-router-dom";
@@ -211,21 +213,18 @@ export default function SimpleCheckoutPage() {
   }
   //xử lý sự kiện order 
   const handleOrder = async () => {
-    if (!selectedAddress) return alert("Vui lòng chọn địa chỉ!"); // nếu ko có địa chỉ mặc định 
+    if (!selectedAddress) return toast.error("Vui lòng chọn địa chỉ!");
 
     const payload = {
       adressId: selectedAddress.userAdressId,
       fullName: selectedAddress.fullName,
       phone: selectedAddress.phone,
-      // email: selectedAddress.email || "test@gmail.com",
       province: selectedAddress.province,
       district: selectedAddress.district,
       ward: selectedAddress.ward,
       address: selectedAddress.addressDetail,
       paymentMethod: method,
       note,
-
-      // items: cartItems,
       productIds: cartItems.map(item => item.cartItemId),
     };
 
@@ -233,27 +232,38 @@ export default function SimpleCheckoutPage() {
       const res = await checkoutOrder(payload, token);
       console.log("📦 Đáp trả từ checkoutOrder:", res);
       if (!res.isSuccess) {
-        return alert("❌ " + res.message);
+        return toast.error("❌ " + res.message);
       }
 
       const result = res.message;
 
-      if (method === "COD") {
-        alert("🎉 Đặt hàng thành công! Thanh toán khi nhận hàng.");
-        navigate('/cod-result');
+      // Xoá sản phẩm khỏi giỏ hàng
+      for (const item of cartItems) {
+        try {
+          await removeFromCart(item.productId, token);
+        } catch (e) {
+          console.error("Lỗi xóa khỏi giỏ:", e);
+        }
+      }
 
+      if (method === "COD") {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Đặt hàng thành công!',
+          text: 'Thanh toán khi nhận hàng.',
+          confirmButtonColor: '#28a745'
+        });
+        navigate('/cod-result');
       } else {
         if (!result || typeof result !== "string") {
-          return alert("❌ Không nhận được URL thanh toán hợp lệ.");
+          return toast.error("❌ Không nhận được URL thanh toán hợp lệ.");
         }
-
-        // 👉 Redirect sang URL thanh toán (VNPAY, MOMO, ...)
         window.location.href = result;
       }
 
     } catch (error) {
       console.error("❌ Lỗi khi đặt hàng:", error);
-      alert("❌ Đặt hàng thất bại!");
+      toast.error("❌ Đặt hàng thất bại!");
     }
   };
 
@@ -287,18 +297,18 @@ export default function SimpleCheckoutPage() {
         // 👉 Đang ở chế độ sửa
         await UpdateAddress(token, formData, editAdress.userAdressId);
         SeteditAdress(null);
-        alert("✏️ Đã cập nhật địa chỉ.");
+        toast.success("Đã cập nhật địa chỉ.");
       } else {
         // 👉 Đang ở chế độ thêm
         await AddUserAddress(token, formData);
-        alert("✅ Đã thêm địa chỉ.");
+        toast.success("Đã thêm địa chỉ.");
       }
 
       await fetchAddresses();
       setMode("select"); // quay về màn chọn địa chỉ
     } catch (err) {
       console.error("❌ Lỗi thêm/sửa địa chỉ:", err);
-      alert("❌ Thêm/Sửa địa chỉ thất bại!");
+      toast.error("Thêm/Sửa địa chỉ thất bại!");
     }
   };
 
@@ -312,10 +322,6 @@ export default function SimpleCheckoutPage() {
       district: addr.district,
       ward: addr.ward,
       addressDetail: addr.addressDetail,
-      // email: addr.email || "",
-      // note: addr.note || "",
-      // isGift: false,
-      // voucherCode: "",
       isDefault: addr.isDefault
     });
 
@@ -323,16 +329,22 @@ export default function SimpleCheckoutPage() {
   };
 
   const handleDeleteAddress = async (addr) => {
-    const confirm = window.confirm("Bạn có chắc muốn xoá địa chỉ này?");
-    if (!confirm) return;
+    const confirm = await Swal.fire({
+      title: 'Bạn có chắc muốn xoá địa chỉ này?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy'
+    });
+    if (!confirm.isConfirmed) return;
 
     try {
       await DeleteAddress(token, addr.userAdressId); // 🛠 Dùng hàm Delete đã sửa
       await fetchAddresses();
-      alert("🗑️ Đã xoá địa chỉ!");
+      toast.success("Đã xoá địa chỉ!");
     } catch (err) {
       console.error("❌ Lỗi xoá địa chỉ:", err);
-      alert("❌ Không thể xoá địa chỉ.");
+      toast.error("Không thể xoá địa chỉ.");
     }
   };
 

@@ -1,0 +1,125 @@
+.resultContainer {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+}
+
+.resultCard {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+}
+
+.resultCard:hover {
+  transform: translateY(-5px);
+}
+
+.iconWrapper {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+.successIcon {
+  color: #28a745;
+}
+
+.errorIcon {
+  color: #dc3545;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  background: -webkit-linear-gradient(#333, #666);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.infoList {
+  text-align: left;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 25px 0;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+  padding-bottom: 8px;
+}
+
+.infoItem:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.label {
+  color: #777;
+  font-weight: 500;
+}
+
+.value {
+  color: #333;
+  font-weight: 600;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btnHome {
+  background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+  border: none;
+  padding: 12px 25px;
+  border-radius: 30px;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3);
+}
+
+.btnHome:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(37, 117, 252, 0.4);
+  color: #fff;
+}
+
+.btnOrder {
+  background: #fff;
+  border: 2px solid #2575fc;
+  color: #2575fc;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btnOrder:hover {
+  background: #f0f7ff;
+  color: #2575fc;
+}

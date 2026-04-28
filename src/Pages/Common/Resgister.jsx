@@ -4,6 +4,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FiUser, FiMail, FiLock, FiShoppingBag, FiArrowRight } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../Hooks/useAuth";
+import Swal from "sweetalert2";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,8 +35,19 @@ const Register = () => {
     // Gọi API với payload đầy đủ
     const result = await register({ email, password, confirmPassWord: confirmPassword, fullName });
     if (result.success) {
-      alert("Đăng ký thành công!");
-      navigate("/login");
+      Swal.fire({
+        title: 'Đăng ký thành công!',
+        text: 'Vui lòng kiểm tra email để kích hoạt tài khoản của bạn.',
+        icon: 'success',
+        confirmButtonText: 'Đến trang đăng nhập',
+        confirmButtonColor: '#4f46e5',
+        background: '#1e1e2d',
+        color: '#fff',
+        timer: 5000,
+        timerProgressBar: true,
+      }).then((result) => {
+        navigate("/login");
+      });
     } else {
       setError(result.message || "Đăng ký thất bại");
     }

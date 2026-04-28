@@ -33,8 +33,15 @@ export default function UserLayout({ children }) {
       if (!token) return;
       try {
         const res = await getCartItems(token);
-        const items = res.data?.cartItems || [];
-        const total = items.reduce((sum, item) => sum + item.soLuong, 0);
+        const sellerGroups = res.data?.sellerGroups || [];
+        let total = 0;
+        sellerGroups.forEach(group => {
+          if (group.cartItems) {
+            group.cartItems.forEach(item => {
+              total += item.soLuong;
+            });
+          }
+        });
         setCartCount(total);
       } catch (err) {
         console.warn("Không thể lấy giỏ hàng từ server:", err.message);
@@ -108,13 +115,9 @@ export default function UserLayout({ children }) {
               )}
             </div>
 
-            <a href="/cart" className="cp-cart-link">
-              🛒 Giỏ hàng
-              {cartCount > 0 && <span className="cp-cart-badge">{cartCount}</span>}
-            </a>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Main Header */}
       <header className="cp-header">
@@ -140,7 +143,7 @@ export default function UserLayout({ children }) {
             <button title="Thông báo">
               <FontAwesomeIcon icon={faBell} />
             </button>
-            <a href="/cart" title="Giỏ hàng">
+            <a href="/cart" title="Giỏ hàng" className="cp-header-cart-link">
               <FontAwesomeIcon icon={faShoppingCart} />
               {cartCount > 0 && <span className="cp-header-cart-badge">{cartCount}</span>}
             </a>

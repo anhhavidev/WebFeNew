@@ -27,7 +27,7 @@ export default function useAuth() {
 
   const getProfile = async (token) => {
     try {
-      const response = await fetch("http://localhost:5230/api/Acount/profile", {
+      const response = await fetch("http://localhost:5230/api/Account/profile", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ export default function useAuth() {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:5230/api/Acount/signin", {
+      const response = await fetch("http://localhost:5230/api/Account/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, method: "normal" }), // thêm đây 
@@ -91,6 +91,17 @@ export default function useAuth() {
     }
 
       const data = await response.json();
+      
+      // ✅ Kiểm tra backend trả về success hay không (ResponeDTO.IsSuccess)
+      if (!data.isSuccess) {
+        throw new Error(data.message || "Tài khoản hoặc mật khẩu không đúng!");
+      }
+
+      // ✅ Đảm bảo data.data không null mới truy cập accessToken/refreshToken
+      if (!data.data) {
+         throw new Error("Không nhận được dữ liệu từ hệ thống. Thử lại sau!");
+      }
+
       localStorage.setItem("token", data.data.accessToken);
       localStorage.setItem("refreshToken", data.data.refreshToken);
 
@@ -107,7 +118,7 @@ export default function useAuth() {
 
   const register = async ({ email, password, confirmPassWord, fullName }) => {
   try {
-    const response = await fetch("http://localhost:5230/api/Acount/signup", {
+    const response = await fetch("http://localhost:5230/api/Account/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, confirmPassWord, fullName }),
@@ -138,7 +149,7 @@ export default function useAuth() {
     const refreshToken = localStorage.getItem("refreshToken");
 
     try {
-      const res = await fetch("http://localhost:5230/api/Acount/refresh-token", {
+      const res = await fetch("http://localhost:5230/api/Account/refresh-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: oldToken, refreshToken }),

@@ -3,7 +3,6 @@ import Slider from 'react-slick';
 import UserLayout from '../../layout1/UserLayout';
 import { getPaginatedProducts } from '../../Service/ProductApi';
 import { FaChevronLeft, FaChevronRight, FaShoppingCart, FaStar } from 'react-icons/fa';
-import { addProductToCart } from '../../Service/cartApi';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import useAuth from '../../Hooks/useAuth';
@@ -12,7 +11,12 @@ import { useCart } from '../../constants/CartContext';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './CustomerPages.css';
-import { getCartItems } from "../../Service/cartApi";
+import { getCartItems, addProductToCart } from "../../Service/cartApi";
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const PrevArrow = ({ onClick }) => (
   <div onClick={onClick} style={{
@@ -47,7 +51,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { user, ensureTokenValid } = useAuth();
   const { setCartCount } = useCart();
-  const [alert, setAlert] = useState({ message: "", type: "", visible: false, fading: false });
+  const [toastAlert, setToastAlert] = useState({ message: "", type: "", visible: false, fading: false });
 
   const pageNumber = parseInt(searchParams.get("page")) || 1;
   const pageSize = parseInt(searchParams.get("pageSize")) || 12;
@@ -93,25 +97,36 @@ export default function Home() {
   };
 
   const showAlert = (message, type = "success", duration = 3000) => {
-    setAlert({ message, type, visible: true, fading: false });
-    setTimeout(() => setAlert((prev) => ({ ...prev, fading: true })), duration - 500);
-    setTimeout(() => setAlert((prev) => ({ ...prev, visible: false, fading: false })), duration);
+    setToastAlert({ message, type, visible: true, fading: false });
+    setTimeout(() => setToastAlert((prev) => ({ ...prev, fading: true })), duration - 500);
+    setTimeout(() => setToastAlert((prev) => ({ ...prev, visible: false, fading: false })), duration);
   };
 
   const handleAddToCart = async (product) => {
-    try {
-      if (!user) {
-        addToLocalCart(product.productId, 1, (newCount) => {
-          setCartCount(newCount);
-        });
-        setSelectedProduct(product);
-        setShowModal(true);
-        showAlert("✅ Thêm vào giỏ hàng thành công!", "success");
-      }
+    if (!user) {
+      const result = await MySwal.fire({
+        title: "Bạn chưa đăng nhập",
+        text: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Đăng nhập ngay",
+        cancelButtonText: "Để sau",
+        confirmButtonColor: "#2563eb",
+        cancelButtonColor: "#64748b",
+        borderRadius: "15px"
+      });
 
+      if (result.isConfirmed) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    const loadingToast = toast.loading("Đang thêm vào giỏ...");
+    try {
       const token = await ensureTokenValid();
       if (!token) {
-        alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+        toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
         navigate("/login");
         return;
       }
@@ -119,16 +134,26 @@ export default function Home() {
       const result = await addProductToCart(product.productId, 1, token);
       if (result.isSuccess) {
         const res = await getCartItems(token);
-        const totalQuantity = res.data?.cartItems?.reduce((sum, item) => sum + item.soLuong, 0);
-        setCartCount(totalQuantity || 0);
+        const sellerGroups = res.data?.sellerGroups || [];
+        let totalQuantity = 0;
+        sellerGroups.forEach(group => {
+          if (group.cartItems) {
+            group.cartItems.forEach(item => {
+              totalQuantity += item.soLuong;
+            });
+          }
+        });
+
+        setCartCount(totalQuantity);
         setSelectedProduct(product);
         setShowModal(true);
-        showAlert("✅ Thêm vào giỏ hàng thành công!", "success");
+        toast.success("Đã thêm vào giỏ hàng!", { id: loadingToast });
       } else {
-        alert("Hết hàng rồi ");
+        toast.error(result.message || "Không thể thêm sản phẩm.", { id: loadingToast });
       }
     } catch (error) {
-      showAlert(error.message || "❌ Có lỗi khi thêm vào giỏ hàng.", "danger");
+      console.error(error);
+      toast.error("Có lỗi xảy ra.", { id: loadingToast });
     }
   };
 
@@ -147,10 +172,10 @@ export default function Home() {
   return (
     <UserLayout>
       {/* Alert Toast */}
-      {alert.visible && (
-        <div className={`cp-alert ${alert.type} ${alert.fading ? "fading" : ""}`}>
-          {alert.message}
-          <button className="cp-alert-close" onClick={() => setAlert({ ...alert, visible: false })}>✕</button>
+      {toastAlert.visible && (
+        <div className={`cp-alert ${toastAlert.type} ${toastAlert.fading ? "fading" : ""}`}>
+          {toastAlert.message}
+          <button className="cp-alert-close" onClick={() => setToastAlert({ ...toastAlert, visible: false })}>✕</button>
         </div>
       )}
 

@@ -17,7 +17,7 @@
 //       const id_token = response.credential;
 
 //       try {
-//         const res = await fetch("http://localhost:5230/api/Acount/google-login", {
+//         const res = await fetch("http://localhost:5230/api/Account/google-login", {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
 //           body: JSON.stringify({ IdToken: id_token }),
@@ -110,12 +110,12 @@ const GoogleOneTap = () => {
       const id_token = response.credential;
 
       try {
-        // const res = await fetch("http://localhost:5230/api/Acount/google-login", {
+        // const res = await fetch("http://localhost:5230/api/Account/google-login", {
         //   method: "POST",
         //   headers: { "Content-Type": "application/json" },
         //   body: JSON.stringify({ IdToken: id_token }),
         // });
-        const res = await fetch("http://localhost:5230/api/Acount/signin", {
+        const res = await fetch("http://localhost:5230/api/Account/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ GoogleIdToken: id_token, Method: "google" })
