@@ -37,8 +37,15 @@ const ProductManagerSeller = () => {
     setSearch(searchInput);
     setCategory(categoryInput);
     setStatus(statusInput);
-    setMinPrice(minPriceInput.trim() !== "" ? Number(minPriceInput) : null);
-    setMaxPrice(maxPriceInput.trim() !== "" ? Number(maxPriceInput) : null);
+
+    const parsePrice = (val) => {
+      if (!val) return null;
+      const num = Number(val.toString().replace(/\D/g, ""));
+      return isNaN(num) ? null : num;
+    };
+
+    setMinPrice(parsePrice(minPriceInput));
+    setMaxPrice(parsePrice(maxPriceInput));
     setPageIndex(1);
   };
 
@@ -75,6 +82,7 @@ const ProductManagerSeller = () => {
     } catch (error) {
       console.error("Lỗi lưu sản phẩm:", error);
       toast.error("Thao tác thất bại!", { id: loadingToast });
+      throw error;
     }
   };
 
@@ -212,19 +220,19 @@ const ProductManagerSeller = () => {
         </div>
         <div className="col-md-2">
           <input
-            type="number"
+            type="text"
             className="form-control"
             placeholder="Giá từ"
-            value={minPriceInput}
+            value={minPriceInput ? Number(minPriceInput.toString().replace(/\D/g, "")).toLocaleString("vi-VN") : ""}
             onChange={(e) => setMinPriceInput(e.target.value)}
           />
         </div>
         <div className="col-md-2">
           <input
-            type="number"
+            type="text"
             className="form-control"
             placeholder="Đến giá"
-            value={maxPriceInput}
+            value={maxPriceInput ? Number(maxPriceInput.toString().replace(/\D/g, "")).toLocaleString("vi-VN") : ""}
             onChange={(e) => setMaxPriceInput(e.target.value)}
           />
         </div>
@@ -344,7 +352,7 @@ const ProductManagerSeller = () => {
                   {/* Xoá */}
                   <button
                     className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(p.productId)}
+                    onClick={() => handleDelete(p.productId, p.name)}
                   >
                     <i className="bi bi-trash"></i>
                   </button>
@@ -446,8 +454,8 @@ const ProductManagerSeller = () => {
         </ul>
       </nav>
       {showForm && (
-        <div className="modal fade show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg modal-dialog-scrollable">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">

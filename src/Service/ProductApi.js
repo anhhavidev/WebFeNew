@@ -129,7 +129,15 @@ export async function addProduct(product) {
       body: formData,
     });
 
-    if (!response.ok) throw new Error("Thêm sản phẩm thất bại");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      if (errorData && errorData.errors) {
+        const err = new Error("Validation Error");
+        err.validationErrors = errorData.errors;
+        throw err;
+      }
+      throw new Error(errorData?.message || "Thêm sản phẩm thất bại");
+    }
     return await response.json();
   } catch (error) {
     console.error("Lỗi trong addProduct:", error);
@@ -212,7 +220,15 @@ export async function updateProduct(id, product) {
     body: formData,
   });
 
-  if (!response.ok) throw new Error("Cập nhật sản phẩm thất bại");
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    if (errorData && errorData.errors) {
+      const err = new Error("Validation Error");
+      err.validationErrors = errorData.errors;
+      throw err;
+    }
+    throw new Error(errorData?.message || "Cập nhật sản phẩm thất bại");
+  }
   return await response.json();
 }
 

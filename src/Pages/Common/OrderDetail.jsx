@@ -4,6 +4,8 @@ import { getOrderDetail, ConfirmReceivedOrder } from "../../Service/OrderAPI";
 import "./OrderDetail.css";
 import UserLayout from "../../layout1/UserLayout";
 import useAuth from "../../Hooks/useAuth";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 export default function OrderDetail() {
   const { orderId } = useParams(); // lấy từ URL (parentOrderId)
@@ -76,12 +78,22 @@ export default function OrderDetail() {
   // 🔹 Hàm xử lý khi người dùng xác nhận đã nhận hàng
   // 🔹 Hàm xử lý khi người dùng xác nhận đã nhận hàng
   async function handleConfirmReceived(orderChildId) {
-    if (!window.confirm("Bạn có chắc chắn đã nhận được đơn hàng này?")) return;
+    const confirm = await Swal.fire({
+      title: 'Xác nhận nhận hàng',
+      text: 'Bạn có chắc chắn đã nhận được đơn hàng này?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Đã nhận hàng',
+      cancelButtonText: 'Chưa',
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d'
+    });
+
+    if (!confirm.isConfirmed) return;
 
     try {
-      const result = await ConfirmReceivedOrder(orderChildId); // result = { data: { orderId, status, paymentStatus }, message: "..." }
-
-      alert(result.message);
+      const result = await ConfirmReceivedOrder(orderChildId);
+      toast.success(result.message || "Xác nhận đơn hàng thành công!");
 
       // ✅ Cập nhật lại trạng thái đơn ngay trên giao diện
       setOrderDetail((prev) => ({
@@ -96,10 +108,8 @@ export default function OrderDetail() {
             : child
         ),
       }));
-
-      alert("✅ Xác nhận đơn hàng thành công!");
     } catch (error) {
-      alert("❌ Xác nhận thất bại: " + error.message);
+      toast.error("❌ Xác nhận thất bại: " + error.message);
     }
   }
 
@@ -108,7 +118,7 @@ export default function OrderDetail() {
 
   return (
     <UserLayout>
-      <div className="container mt-4">
+      <div className="cp-container">
         <h3>🧾 Chi tiết đơn hàng #{orderDetail.parentOrderId}</h3>
         <form className="border p-4 rounded shadow-sm bg-light">
           <div className="row mb-3">

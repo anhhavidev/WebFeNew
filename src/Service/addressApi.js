@@ -22,88 +22,88 @@ export async function GetAllUserAddresses(token) {
   }
 }
 export async function AddUserAddress(token, userAddress) {
-  try {
-    const response = await fetch(`${API}/UserAddress`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        fullName: userAddress.fullName,
-        phone: userAddress.phone,
-        province: userAddress.province,
-        district: userAddress.district,
-        ward: userAddress.ward,
-        addressDetail: userAddress.addressDetail,
-        isDefault: userAddress.isDefault,
-      }),
-    });
+  const response = await fetch(`${API}/UserAddress`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      fullName: userAddress.fullName,
+      phone: userAddress.phone,
+      province: userAddress.province,
+      district: userAddress.district,
+      ward: userAddress.ward,
+      addressDetail: userAddress.addressDetail,
+      isDefault: userAddress.isDefault,
+    }),
+  });
 
-    if (!response.ok) {
+  if (!response.ok) {
+    let errMsg = "Thêm địa chỉ thất bại";
+    try {
       const err = await response.json();
-      alert("Thêm địa chỉ thất bại: " + err.message || response.status);
-      return null;
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Lỗi khi gọi API thêm địa chỉ:", error);
-    return null;
+      errMsg = err.message || errMsg;
+    } catch (e) {}
+    throw new Error(errMsg);
   }
+
+  const data = await response.json();
+  return data;
 }
+
 export async function UpdateAddress(token, userAddress, id) {
-  try {
-    const response = await fetch(`${API}/UserAddress/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        fullName: userAddress.fullName,
-        phone: userAddress.phone,
-        province: userAddress.province,
-        district: userAddress.district,
-        ward: userAddress.ward,
-        addressDetail: userAddress.addressDetail,
-        isDefault: userAddress.isDefault
-      })
-    });
+  const response = await fetch(`${API}/UserAddress/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      fullName: userAddress.fullName,
+      phone: userAddress.phone,
+      province: userAddress.province,
+      district: userAddress.district,
+      ward: userAddress.ward,
+      addressDetail: userAddress.addressDetail,
+      isDefault: userAddress.isDefault
+    })
+  });
 
-    if (!response.ok) {
-      alert("Cập nhật địa chỉ thất bại");
-      return;
-    }
-
-    const data = await response.json();
-    return data;
-
-  } catch (error) {
-    console.error("Lỗi khi gọi API cập nhật địa chỉ:", error);
-    return null;
+  if (!response.ok) {
+    let errMsg = "Cập nhật địa chỉ thất bại";
+    try {
+      const err = await response.json();
+      errMsg = err.message || errMsg;
+    } catch (e) {}
+    throw new Error(errMsg);
   }
+
+  const data = await response.json();
+  return data;
 }
+
 export async function DeleteAddress(token, id) {
-  try {
-    const response = await fetch(`${API}/UserAddress/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      alert("Xóa địa chỉ thất bại");
-      return;
+  const response = await fetch(`${API}/UserAddress/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
     }
+  });
 
+  if (!response.ok) {
+    let errMsg = "Xóa địa chỉ thất bại";
+    try {
+      const err = await response.json();
+      errMsg = err.message || errMsg;
+    } catch (e) {}
+    throw new Error(errMsg);
+  }
+
+  try {
     const data = await response.json();
     return data;
-
-  } catch (error) {
-    console.error("Lỗi khi gọi API xóa địa chỉ:", error);
-    return null;
+  } catch (e) {
+    return true;
   }
 }

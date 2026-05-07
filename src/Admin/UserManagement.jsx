@@ -76,12 +76,22 @@ const UserManagement = () => {
 
     const loadingToast = toast.loading(editingUserId ? "Đang cập nhật..." : "Đang thêm người dùng...");
     try {
+      const dto = {
+        fullName: formData.hoTen,
+        userName: formData.email,
+        email: formData.email,
+        isActive: true,
+      };
+      if (formData.password) dto.password = formData.password;
+
       if (editingUserId) {
-        if (!formData.password) delete formData.password;
-        await updateUser(editingUserId, formData, token);
+        const existingUser = users.find(u => u.id === editingUserId);
+        dto.roleNames = existingUser?.roleNames || ["Customer"];
+        await updateUser(editingUserId, dto, token);
         toast.success("Cập nhật người dùng thành công!", { id: loadingToast });
       } else {
-        await createUser(formData, token);
+        dto.roleNames = ["Customer"];
+        await createUser(dto, token);
         toast.success("Thêm người dùng thành công!", { id: loadingToast });
       }
       setFormData({ hoTen: "", email: "", sdt: "", password: "", gioiTinh: true });
@@ -97,11 +107,11 @@ const UserManagement = () => {
   const handleEdit = (user) => {
     setEditingUserId(user.id);
     setFormData({
-      hoTen: user.hoTen,
-      email: user.email,
-      sdt: user.sdt,
+      hoTen: user.fullName || user.hoTen || "",
+      email: user.email || "",
+      sdt: user.sdt || "",
       password: "",
-      gioiTinh: user.gioiTinh,
+      gioiTinh: user.gioiTinh !== undefined ? user.gioiTinh : true,
     });
     setShowFormModal(true);
   };
@@ -142,7 +152,18 @@ const UserManagement = () => {
 
     const loadingToast = toast.loading("Đang thực hiện...");
     try {
-      await assignRole(roleData.userId, roleData.roleName, token);
+      const targetUser = users.find(u => u.id === roleData.userId);
+      if (!targetUser) throw new Error("User not found");
+
+      const dto = {
+        fullName: targetUser.fullName || targetUser.hoTen || targetUser.userName,
+        userName: targetUser.userName || targetUser.email,
+        email: targetUser.email,
+        isActive: targetUser.isActive !== undefined ? targetUser.isActive : true,
+        roleNames: [roleData.roleName]
+      };
+
+      await updateUser(roleData.userId, dto, token);
       toast.success("Cấp quyền thành công!", { id: loadingToast });
       setShowRoleModal(false);
       fetchUsers();
@@ -162,11 +183,11 @@ const UserManagement = () => {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.hoTen?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (user.fullName || user.hoTen || "")?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.sdt?.includes(searchTerm);
       
-    const matchesRole = roleFilter === "" ? true : user.roles?.includes(roleFilter) || (!user.roles?.length && roleFilter === "Customer");
+    const matchesRole = roleFilter === "" ? true : user.roleNames?.includes(roleFilter) || (!user.roleNames?.length && roleFilter === "Customer");
     
     return matchesSearch && matchesRole;
   });
@@ -235,18 +256,18 @@ const UserManagement = () => {
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <tr key={user.id}>
-                    <td className="fw-medium text-dark">{user.hoTen}</td>
+                    <td className="fw-medium text-dark">{user.fullName || user.hoTen}</td>
                     <td>{user.email}</td>
                     <td>{user.sdt || "—"}</td>
                     <td>{user.gioiTinh ? "Nam" : "Nữ"}</td>
-                    <td>{getRoleBadge(user.roles)}</td>
+                    <td>{getRoleBadge(user.roleNames)}</td>
                     <td>
                         <div className="action-buttons">
                             <button
                                 className="btn-icon view"
                                 title="Cấp quyền"
                                 onClick={() => {
-                                    setRoleData({ userId: user.id, roleName: user.roles?.[0] || "Customer" });
+                                    setRoleData({ userId: user.id, roleName: user.roleNames?.[0] || "Customer" });
                                     setShowRoleModal(true);
                                 }}
                             >
@@ -262,7 +283,7 @@ const UserManagement = () => {
                             <button
                                 className="btn-icon delete"
                                 title="Xóa người dùng"
-                                onClick={() => handleDelete(user.id, user.hoTen)}
+                                onClick={() => handleDelete(user.id, user.fullName || user.hoTen || user.email)}
                             >
                                 <FiTrash2 />
                             </button>

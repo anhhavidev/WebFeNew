@@ -1,10 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import UserLayout from '../../layout1/UserLayout';
 import { FaCheckCircle, FaReceipt, FaShoppingBag } from 'react-icons/fa';
 import styles from './VnpayResultPage.module.css'; // Reusing the same beautiful styles
 
 export default function OrderSuccessPage() {
+  const location = useLocation();
+  const orderId = location.state?.orderId;
+
   return (
     <UserLayout>
       <div className={styles.resultContainer}>
@@ -28,8 +31,8 @@ export default function OrderSuccessPage() {
             <Link to="/" className={styles.btnHome}>
               <FaShoppingBag className="me-2" /> Tiếp tục mua sắm
             </Link>
-            <Link to="/user/orders" className={styles.btnOrder}>
-              <FaReceipt className="me-2" /> Xem đơn hàng của tôi
+            <Link to={orderId ? `/user/orders/${orderId}` : "/orders"} className={styles.btnOrder}>
+              <FaReceipt className="me-2" /> Xem chi tiết đơn hàng
             </Link>
           </div>
         </div>

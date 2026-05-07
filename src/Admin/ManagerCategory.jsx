@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./AdminDashboard.css";
-import { 
-  getCategories, 
-  addCategory, 
-  updateCategory, 
-  deleteCategory 
+import {
+  getCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory
 } from "../Service/categoryApi";
 import { FiSearch, FiFilter, FiPlus, FiEdit2, FiTrash2, FiTag } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -19,10 +19,11 @@ const ManagerCategory = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    isActive: true,
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,8 +45,8 @@ const ManagerCategory = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const openForm = (category = null) => {
@@ -54,9 +55,10 @@ const ManagerCategory = () => {
       setFormData({
         name: category.name,
         description: category.description,
+        isActive: category.isActive !== undefined ? category.isActive : true,
       });
     } else {
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "", description: "", isActive: true });
     }
     setShowModal(true);
   };
@@ -64,7 +66,7 @@ const ManagerCategory = () => {
   const closeForm = () => {
     setShowModal(false);
     setEditingCategory(null);
-    setFormData({ name: "", description: "" });
+    setFormData({ name: "", description: "", isActive: true });
   };
 
   const handleSubmit = async (e) => {
@@ -137,7 +139,7 @@ const ManagerCategory = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="table-actions">
             <button className="btn-table-action primary" onClick={() => openForm(null)}>
               <FiPlus className="w-5 h-5" /> Thêm danh mục
@@ -153,6 +155,7 @@ const ManagerCategory = () => {
                 <th width="100px">ID</th>
                 <th width="30%">Tên danh mục</th>
                 <th>Mô tả</th>
+                <th width="120px">Trạng thái</th>
                 <th width="120px" className="text-center">Thao tác</th>
               </tr>
             </thead>
@@ -166,14 +169,21 @@ const ManagerCategory = () => {
                   <tr key={category.categoryid}>
                     <td className="text-muted fw-medium">#C{category.categoryid}</td>
                     <td className="fw-medium text-dark">
-                        <div className="d-flex align-items-center">
-                            <span className="bg-light p-2 rounded-2 me-3 text-primary d-inline-flex align-items-center justify-content-center border">
-                                <FiTag size={16} />
-                            </span>
-                            {category.name}
-                        </div>
+                      <div className="d-flex align-items-center">
+                        <span className="bg-light p-2 rounded-2 me-3 text-primary d-inline-flex align-items-center justify-content-center border">
+                          <FiTag size={16} />
+                        </span>
+                        {category.name}
+                      </div>
                     </td>
                     <td className="text-muted">{category.description || "Chưa có mô tả"}</td>
+                    <td>
+                      {category.isActive ? (
+                        <span className="status-badge success">Kích hoạt</span>
+                      ) : (
+                        <span className="status-badge danger">Đã ẩn</span>
+                      )}
+                    </td>
                     <td>
                       <div className="action-buttons justify-content-center">
                         <button
@@ -207,47 +217,63 @@ const ManagerCategory = () => {
       {/* Modern Modal for Adding/Editing Category */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-            <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title">{editingCategory ? "Cập nhật danh mục" : "Thêm danh mục mới"}</h5>
-                        <button type="button" className="btn-close" onClick={closeForm}></button>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{editingCategory ? "Cập nhật danh mục" : "Thêm danh mục mới"}</h5>
+                <button type="button" className="btn-close" onClick={closeForm}></button>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="modal-body">
+                  <div className="mb-4">
+                    <label className="form-label text-muted fw-medium fs-7">Tên danh mục <span className="text-danger">*</span></label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Ví dụ: Điện thoại thông minh"
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-muted fw-medium fs-7">Mô tả danh mục</label>
+                    <textarea
+                      className="form-control"
+                      name="description"
+                      rows="4"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      placeholder="Nhập mô tả cho danh mục này..."
+                    ></textarea>
+                  </div>
+                  <div className="mb-3">
+                    <div className="form-check form-switch">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        name="isActive"
+                        id="isActiveSwitch"
+                        checked={formData.isActive}
+                        onChange={handleInputChange}
+                      />
+                      <label className="form-check-label text-muted fw-medium fs-7 ms-2" htmlFor="isActiveSwitch">
+                        Trạng thái kích hoạt (Hiển thị)
+                      </label>
                     </div>
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            <div className="mb-4">
-                                <label className="form-label text-muted fw-medium fs-7">Tên danh mục <span className="text-danger">*</span></label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    placeholder="Ví dụ: Điện thoại thông minh"
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label text-muted fw-medium fs-7">Mô tả danh mục</label>
-                                <textarea
-                                    className="form-control"
-                                    name="description"
-                                    rows="4"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    placeholder="Nhập mô tả cho danh mục này..."
-                                ></textarea>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary px-4" onClick={closeForm}>Hủy</button>
-                            <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>
-                                {editingCategory ? "Cập nhật" : "Thêm mới"}
-                            </button>
-                        </div>
-                    </form>
+                  </div>
                 </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary px-4" onClick={closeForm}>Hủy</button>
+                  <button type="submit" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }}>
+                    {editingCategory ? "Cập nhật" : "Thêm mới"}
+                  </button>
+                </div>
+              </form>
             </div>
+          </div>
         </div>
       )}
     </div>

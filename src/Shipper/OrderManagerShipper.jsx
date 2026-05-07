@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { GetOrdersForShipper, StartShipping, UpdateDeliveryStatus } from "../Service/Shipper/OrderShipperApi";
 import useAuth from "../Hooks/useAuth";
-import { FiPackage, FiTruck, FiCheck, FiX, FiMapPin, FiPhone, FiUser, FiInfo } from "react-icons/fi";
+import { FiPackage, FiTruck, FiCheck, FiX, FiMapPin, FiPhone, FiUser, FiInfo, FiSearch } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -15,13 +15,19 @@ export default function OrderManagerShipper() {
   const [pageSize, setPageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
   useEffect(() => {
     const fetchOrders = async () => {
       const token = await ensureTokenValid();
       if (!token) return;
 
       try {
-        const result = await GetOrdersForShipper(token, pageNumber, pageSize);
+        const filters = { keyword, status: statusFilter };
+        const result = await GetOrdersForShipper(token, pageNumber, pageSize, filters);
         if (result.isSuccess) {
           setOrders(result.data.items || []);
           setTotalPages(result.data.totalPages || 1);
@@ -35,7 +41,7 @@ export default function OrderManagerShipper() {
     };
 
     fetchOrders();
-  }, [pageNumber, pageSize]);
+  }, [pageNumber, pageSize, keyword, statusFilter]);
 
 
   const handleStartShipping = async (orderId) => {
@@ -146,9 +152,51 @@ export default function OrderManagerShipper() {
   };
 
   return (
-    <div className="container mt-4">
-      <h4 className="mb-3">🚚 Quản lý đơn hàng của Shipper</h4>
-      <table className="table table-bordered align-middle text-center">
+    <div className="container-fluid px-4 mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+        <h4 className="mb-0 d-flex align-items-center gap-2" style={{ fontSize: "1.25rem", fontWeight: "700" }}>
+          🚚 <span className="text-dark">Quản lý đơn hàng Shipper</span>
+        </h4>
+        
+        <div className="filter-bar-premium rounded shadow-sm border">
+          <div className="search-group-premium">
+            <FiSearch className="text-muted" />
+            <input 
+              type="text" 
+              placeholder="Mã đơn, khách, sđt..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && setKeyword(searchTerm)}
+            />
+            <button className="btn-search" onClick={() => setKeyword(searchTerm)}>
+              Tìm
+            </button>
+          </div>
+
+          <div className="filter-controls-premium">
+            <select 
+              className="select-premium"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Trạng thái</option>
+              <option value="Assigned">Mới được gán</option>
+              <option value="Shipping">Đang giao hàng</option>
+              <option value="Delivered">Giao thành công</option>
+              <option value="FailedDelivery">Giao thất bại</option>
+              <option value="Received">Khách đã nhận</option>
+            </select>
+
+            <button 
+              className="btn-clear-premium" 
+              onClick={() => { setSearchTerm(""); setKeyword(""); setStatusFilter(""); }}
+            >
+              Xóa lọc
+            </button>
+          </div>
+        </div>
+      </div>
+      <table className="table table-bordered align-middle text-center shadow-sm bg-white">
         <thead className="table-info">
           <tr>
             <th>Mã đơn</th>
@@ -218,27 +266,28 @@ export default function OrderManagerShipper() {
           )}
         </tbody>
       </table>
-    <div className="d-flex justify-content-between align-items-center mt-3">
-  <button
-    className="btn btn-outline-primary"
-    disabled={pageNumber === 1}
-    onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
-  >
-    ◀ Trang trước
-  </button>
-
-  <span>
-    Trang <strong>{pageNumber}</strong> / {totalPages}
-  </span>
-
-  <button
-    className="btn btn-outline-primary"
-    disabled={pageNumber >= totalPages} // ✅ Không cho sang nếu đã tới trang cuối
-    onClick={() => setPageNumber((prev) => prev + 1)}
-  >
-    Trang sau ▶
-  </button>
-</div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav>
+          <ul className="pagination admin-pagination justify-content-center mt-4 mb-4">
+            <li className={`page-item ${pageNumber === 1 ? "disabled" : ""}`}>
+              <button className="page-link" onClick={() => setPageNumber(pageNumber - 1)}>
+                Trước
+              </button>
+            </li>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+              <li key={num} className={`page-item ${pageNumber === num ? "active" : ""}`}>
+                <button className="page-link" onClick={() => setPageNumber(num)}>{num}</button>
+              </li>
+            ))}
+            <li className={`page-item ${pageNumber === totalPages ? "disabled" : ""}`}>
+              <button className="page-link" onClick={() => setPageNumber(pageNumber + 1)}>
+                Sau
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
 
 
     </div>

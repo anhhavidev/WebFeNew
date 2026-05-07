@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function RetryPaymentPage() {
   const { orderId } = useParams();
@@ -49,12 +50,12 @@ export default function RetryPaymentPage() {
         if (data?.url) {
           window.location.href = data.url;
         } else {
-          alert("Không tạo được URL thanh toán");
+          toast.error("Không tạo được URL thanh toán");
           navigate("/orders");
         }
       } catch (err) {
         console.error("❌ Lỗi khi tạo URL thanh toán:", err);
-        alert("Có lỗi xảy ra khi tạo thanh toán");
+        toast.error("Có lỗi xảy ra khi tạo thanh toán");
         navigate("/orders");
       }
     }

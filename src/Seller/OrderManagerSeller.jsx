@@ -5,7 +5,7 @@ import { UpdateOrderStatus } from "../Service/Seller/OrderSellerAPI";
 import useAuth from "../Hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import "../Admin/AdminDashboard.css";
-import { FiUser, FiMail, FiPhone, FiPackage, FiCreditCard, FiTruck, FiMapPin, FiShoppingCart, FiEye, FiCheck } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiPackage, FiCreditCard, FiTruck, FiMapPin, FiShoppingCart, FiEye, FiCheck, FiSearch } from "react-icons/fi";
 import toast from "react-hot-toast";
 
 export default function OrderManagerSeller() {
@@ -18,6 +18,13 @@ export default function OrderManagerSeller() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   const { ensureTokenValid } = useAuth();
   const navigate = useNavigate();
 
@@ -27,7 +34,8 @@ export default function OrderManagerSeller() {
       if (!token) return;
 
       try {
-        const data = await GetAllOrderSeller(currentPage, 5, token);
+        const filters = { keyword, status: statusFilter, fromDate, toDate };
+        const data = await GetAllOrderSeller(currentPage, 5, token, filters);
         setOrders(
           data.items.map((item) => ({
             ...item,
@@ -45,7 +53,7 @@ export default function OrderManagerSeller() {
     };
 
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, keyword, statusFilter, fromDate, toDate]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) setCurrentPage(newPage);
@@ -199,9 +207,62 @@ export default function OrderManagerSeller() {
   };
 
   return (
-    <div className="container mt-4">
-      <h4 className="mb-3 d-flex align-items-center gap-2"><FiPackage className="text-primary"/> Quản lý đơn hàng</h4>
-      <table className="table table-bordered align-middle text-center">
+    <div className="container-fluid px-4 mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+        <h4 className="mb-0 d-flex align-items-center gap-2" style={{ fontSize: "1.25rem", fontWeight: "700" }}>
+          <FiPackage className="text-primary"/> <span className="text-dark">Quản lý đơn hàng</span>
+        </h4>
+        
+        <div className="filter-bar-premium rounded shadow-sm border">
+          <div className="search-group-premium">
+            <FiSearch className="text-muted" />
+            <input 
+              type="text" 
+              placeholder="Mã đơn, khách..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && setKeyword(searchTerm)}
+            />
+            <button className="btn-search" onClick={() => setKeyword(searchTerm)}>
+              Tìm
+            </button>
+          </div>
+
+          <div className="filter-controls-premium">
+            <select 
+              className="select-premium"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Trạng thái</option>
+              <option value="Pending">Chờ xác nhận</option>
+              <option value="Confirmed">Đã xác nhận</option>
+              <option value="ReadyToShip">Sẵn sàng giao</option>
+              <option value="Shipping">Đang giao</option>
+              <option value="Delivered">Đã giao</option>
+              <option value="Received">Khách đã nhận</option>
+              <option value="Cancelled">Đã hủy</option>
+              <option value="FailedDelivery">Giao thất bại</option>
+            </select>
+
+            <div className="date-range-premium">
+              <span>Từ</span>
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <span>Đến</span>
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+            </div>
+
+            <button 
+              className="btn-clear-premium" 
+              onClick={() => { setSearchTerm(""); setKeyword(""); setStatusFilter(""); setFromDate(""); setToDate(""); }}
+            >
+              Xóa lọc
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <table className="table table-bordered align-middle text-center shadow-sm bg-white">
         <thead className="table-primary">
           <tr>
             <th>Mã đơn</th>
@@ -377,25 +438,27 @@ export default function OrderManagerSeller() {
       )}
 
       {/* Pagination */}
-      <div className="d-flex justify-content-center">
-        <button
-          className="btn btn-sm btn-primary me-2"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Trang trước
-        </button>
-        <span className="align-self-center">
-          Trang {currentPage} / {totalPages}
-        </span>
-        <button
-          className="btn btn-sm btn-primary ms-2"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Trang sau
-        </button>
-      </div>
+      {totalPages > 1 && (
+        <nav>
+          <ul className="pagination admin-pagination justify-content-center mt-4 mb-4">
+            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+              <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+                Trước
+              </button>
+            </li>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+              <li key={num} className={`page-item ${currentPage === num ? "active" : ""}`}>
+                <button className="page-link" onClick={() => handlePageChange(num)}>{num}</button>
+              </li>
+            ))}
+            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+              <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+                Sau
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
     </div>
   );
 }

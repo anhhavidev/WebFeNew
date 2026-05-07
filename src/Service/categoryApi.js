@@ -23,6 +23,7 @@ export const addCategory = async (categoryData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify(categoryData),
     });
@@ -42,6 +43,7 @@ export const updateCategory = async (id, categoryData) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify(categoryData),
     });
@@ -61,6 +63,7 @@ export const deleteCategory = async (id) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
     if (!response.ok) throw new Error('Lỗi khi xóa danh mục');

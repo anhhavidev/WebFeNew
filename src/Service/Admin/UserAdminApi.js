@@ -40,13 +40,14 @@ export const createUser = async (userData, token) => {
 
 // ✅ Cập nhật user
 export const updateUser = async (id, userData, token) => {
-  const response = await fetch(`${BASE_URL}/update-user/${id}`, {
+  const payload = { ...userData, id: id };
+  const response = await fetch(`${BASE_URL}/update-user`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(userData)
+    body: JSON.stringify(payload)
   });
   if (!response.ok) throw new Error("Cập nhật user thất bại");
   return response.json();

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, ListGroup, Container, Row, Col, Button, Modal, Form } from "react-bootstrap";
 import useAuth from "../../Hooks/useAuth";
 import { updateProfile, changePassword } from "../../Service/userApi";
+import toast from "react-hot-toast";
 
 export default function UserProfile() {
   const { user, ensureTokenValid, getProfile } = useAuth();
@@ -29,7 +30,7 @@ export default function UserProfile() {
       phone: user.phone || "",
       address: user.address || "",
       gender: user.gender || "",
-      dateOfBirth: user.dateOfBirth  ? user.dateOfBirth.split("T")[0] : "", // format yyyy-MM-dd
+      dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split("T")[0] : "", // format yyyy-MM-dd
       gender: user.gender, // ✅ giữ true / false / null
     });
     setShowEdit(true);
@@ -38,75 +39,80 @@ export default function UserProfile() {
   // 🔹 Lưu cập nhật
   const saveEdit = async () => {
     const token = await ensureTokenValid();
-     console.log(formData); // ✅ kiểm tra key trước khi gửi
+    console.log(formData); // ✅ kiểm tra key trước khi gửi
     try {
       await updateProfile(token, formData);
-      alert("Cập nhật thành công ✅");
+      toast.success("Cập nhật thành công ✅");
       setShowEdit(false);
       await getProfile(token); // refresh lại thông tin
     } catch (err) {
-      alert("Cập nhật thất bại ❌");
+      toast.error("Cập nhật thất bại ❌");
     }
   };
 
   // 🔹 Đổi mật khẩu
-// 🔹 Đổi mật khẩu
-const savePassword = async () => {
-  const token = await ensureTokenValid();
-  try {
-    const res = await changePassword(token, passData);
-    const result = res.data; // ResponeDTO<bool> từ backend
+  // 🔹 Đổi mật khẩu
+  const savePassword = async () => {
+    const token = await ensureTokenValid();
+    try {
+      const res = await changePassword(token, passData);
+      const result = res.data; // ResponeDTO<bool> từ backend
 
-    alert(result.message); // ✅ in ra thông báo từ backend
-
-    if (result.isSuccess) {
-      setShowPass(false); // ẩn form nếu thành công
+      if (result.isSuccess) {
+        toast.success(result.message || "Đổi mật khẩu thành công ✅");
+        setShowPass(false);
+      } else {
+        toast.error(result.message || "Đổi mật khẩu thất bại ❌");
+      }
+    } catch (err) {
+      // Nếu backend trả lỗi (ví dụ 400, 401,...)
+      if (err.response && err.response.data) {
+        toast.error(err.response.data.message || "Lỗi hệ thống khi đổi mật khẩu ❌");
+      } else {
+        toast.error("Lỗi hệ thống khi đổi mật khẩu ❌");
+      }
     }
-  } catch (err) {
-    // Nếu backend trả lỗi (ví dụ 400, 401,...)
-    if (err.response && err.response.data) {
-      alert(err.response.data.message || "Lỗi hệ thống khi đổi mật khẩu ❌");
-    } else {
-      alert("Lỗi hệ thống khi đổi mật khẩu ❌");
-    }
-  }
-};
+  };
 
 
 
   return (
-    <Container className="mt-5">
-      <Row className="justify-content-md-center">
-        <Col md={6}>
-          <Card>
-            <Card.Header className="text-center bg-primary text-white">
-              <h5>Thông tin tài khoản</h5>
-            </Card.Header>
-            <ListGroup variant="flush">
-              <ListGroup.Item><strong>Họ tên:</strong> {user.fullName}</ListGroup.Item>
-              <ListGroup.Item><strong>Email:</strong> {user.email}</ListGroup.Item>
-              <ListGroup.Item><strong>Số điện thoại:</strong> {user.phone ? user.phone : "Chưa cập nhập"}</ListGroup.Item>
-              <ListGroup.Item><strong>Địa chỉ:</strong> {user.address ? user.address : "Chưa cập nhập"}</ListGroup.Item>
-              <ListGroup.Item><strong>Ngày sinh:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "Chưa cập nhật"}</ListGroup.Item>
-              <ListGroup.Item>
-                <strong>Giới tính:</strong> {user.gender === true ? "Nam" : user.gender === false ? "Nữ" : "Chưa cập nhật"}
-              </ListGroup.Item>
+    <>
+      <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '75vh' }}>
+        <Container>
+          <Row className="justify-content-center">
+            <Col md={6}>
+              <Card>
+                <Card.Header className="text-center bg-primary text-white">
+                  <h5>Thông tin tài khoản</h5>
+                </Card.Header>
+                <ListGroup variant="flush">
+                  <ListGroup.Item><strong>Họ tên:</strong> {user.fullName}</ListGroup.Item>
+                  <ListGroup.Item><strong>Email:</strong> {user.email}</ListGroup.Item>
+                  <ListGroup.Item><strong>Số điện thoại:</strong> {user.phone ? user.phone : "Chưa cập nhập"}</ListGroup.Item>
+                  <ListGroup.Item><strong>Địa chỉ:</strong> {user.address ? user.address : "Chưa cập nhập"}</ListGroup.Item>
+                  <ListGroup.Item><strong>Ngày sinh:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "Chưa cập nhật"}</ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Giới tính:</strong> {user.gender === true ? "Nam" : user.gender === false ? "Nữ" : "Chưa cập nhật"}
+                  </ListGroup.Item>
 
-              <ListGroup.Item><strong>Trạng thái:</strong> {user.isActive ? "Hoạt động" : "Chưa kích hoạt"}</ListGroup.Item>
-              <ListGroup.Item><strong>Vai trò:</strong> {user.role}</ListGroup.Item>
-              <ListGroup.Item><strong>Ngày tạo:</strong> {new Date(user.createdAt).toLocaleDateString()}</ListGroup.Item>
-            </ListGroup>
-            <Card.Footer className="text-center">
-              <Button variant="warning" className="me-2" onClick={handleEdit}>
-                ✏️ Cập nhật thông tin
-              </Button>
-              <Button variant="danger" onClick={() => setShowPass(true)}>
-                🔑 Đổi mật khẩu
-              </Button>
-            </Card.Footer>
-          </Card>
-        </Col>
-      </Row>
+                  <ListGroup.Item><strong>Trạng thái:</strong> {user.isActive ? "Hoạt động" : "Chưa kích hoạt"}</ListGroup.Item>
+                  <ListGroup.Item><strong>Vai trò:</strong> {user.role}</ListGroup.Item>
+                  <ListGroup.Item><strong>Ngày tạo:</strong> {new Date(user.createdAt).toLocaleDateString()}</ListGroup.Item>
+                </ListGroup>
+                <Card.Footer className="text-center">
+                  <Button variant="warning" className="me-2" onClick={handleEdit}>
+                    ✏️ Cập nhật thông tin
+                  </Button>
+                  <Button variant="danger" onClick={() => setShowPass(true)}>
+                    🔑 Đổi mật khẩu
+                  </Button>
+                </Card.Footer>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </div>
 
       {/* Modal cập nhật thông tin */}
       <Modal show={showEdit} onHide={() => setShowEdit(false)}>
@@ -183,6 +189,6 @@ const savePassword = async () => {
           <Button variant="primary" onClick={savePassword}>Đổi mật khẩu</Button>
         </Modal.Footer>
       </Modal>
-    </Container>
+    </>
   );
 }

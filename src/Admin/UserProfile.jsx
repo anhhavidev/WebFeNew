@@ -3,6 +3,7 @@ import useAuth from '../Hooks/useAuth';
 import { updateProfile } from '../Service/userApi';
 import './AdminDashboard.css';
 import { FiUser, FiMail, FiPhone, FiMapPin, FiShield, FiSave, FiEdit2 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 export default function UserProfile() {
   const { user, ensureTokenValid, getProfile } = useAuth();
@@ -47,11 +48,11 @@ export default function UserProfile() {
     try {
       await updateProfile(token, formData);
       setIsEditing(false);
-      alert('Đã cập nhật hồ sơ thành công!');
+      toast.success('Đã cập nhật hồ sơ thành công!');
       await getProfile(token);
     } catch (error) {
       console.error(error);
-      alert('Cập nhật thất bại.');
+      toast.error('Cập nhật thất bại.');
     }
   };
 

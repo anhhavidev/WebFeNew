@@ -22,7 +22,7 @@ const ProductManagement = () => {
   const [editingProductId, setEditingProductId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  
+
   // Nút tìm kiếm & Lọc
   const [searchInput, setSearchInput] = useState("");
   // ... (giữ nguyên các state lọc bên dưới)
@@ -38,7 +38,7 @@ const ProductManagement = () => {
   const [maxPrice, setMaxPrice] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
-  
+
   // Phân trang
   const [pageNumber, setPageIndex] = useState(1);
   const [pageSize] = useState(8);
@@ -46,7 +46,7 @@ const ProductManagement = () => {
 
   useEffect(() => {
     fetchData();
-  }, [search, category, status, minPrice, maxPrice, pageNumber]); 
+  }, [search, category, status, minPrice, maxPrice, pageNumber]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,8 +83,15 @@ const ProductManagement = () => {
     setSearch(searchInput);
     setCategory(categoryInput);
     setStatus(statusInput);
-    setMinPrice(minPriceInput.trim() !== "" ? Number(minPriceInput) : null);
-    setMaxPrice(maxPriceInput.trim() !== "" ? Number(maxPriceInput) : null);
+
+    const parsePrice = (val) => {
+      if (!val) return null;
+      const num = Number(val.toString().replace(/\D/g, ""));
+      return isNaN(num) ? null : num;
+    };
+
+    setMinPrice(parsePrice(minPriceInput));
+    setMaxPrice(parsePrice(maxPriceInput));
     setPageIndex(1);
   };
 
@@ -124,12 +131,13 @@ const ProductManagement = () => {
     } catch (error) {
       console.error("Lỗi lưu sản phẩm:", error);
       toast.error("Có lỗi xảy ra khi lưu!", { id: loadingToast });
+      throw error;
     }
   };
 
   const handleToggleStatus = async (product) => {
     const action = product.isActive ? "Ẩn" : "Bật";
-    
+
     const result = await MySwal.fire({
       title: `Xác nhận ${action}?`,
       text: `Bạn có chắc muốn ${action.toLowerCase()} sản phẩm "${product.name}"?`,
@@ -200,7 +208,7 @@ const ProductManagement = () => {
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
-          
+
           <div className="table-actions">
             <button className="btn-table-action outline" onClick={() => {
               const filterMenu = document.getElementById("filter-options");
@@ -234,10 +242,10 @@ const ProductManagement = () => {
               </select>
             </div>
             <div className="col-md-2">
-              <input type="number" className="form-control" placeholder="Giá từ" value={minPriceInput} onChange={(e) => setMinPriceInput(e.target.value)} />
+              <input type="text" className="form-control" placeholder="Giá từ" value={minPriceInput ? Number(minPriceInput.toString().replace(/\D/g, "")).toLocaleString("vi-VN") : ""} onChange={(e) => setMinPriceInput(e.target.value)} />
             </div>
             <div className="col-md-2">
-              <input type="number" className="form-control" placeholder="Đến giá" value={maxPriceInput} onChange={(e) => setMaxPriceInput(e.target.value)} />
+              <input type="text" className="form-control" placeholder="Đến giá" value={maxPriceInput ? Number(maxPriceInput.toString().replace(/\D/g, "")).toLocaleString("vi-VN") : ""} onChange={(e) => setMaxPriceInput(e.target.value)} />
             </div>
             <div className="col-md-2 d-flex gap-2">
               <button className="btn btn-primary w-100" onClick={handleFilter}>Tìm</button>
@@ -340,15 +348,15 @@ const ProductManagement = () => {
             <div className="modal-content overflow-hidden border-0 shadow-2xl">
               <div className="modal-header bg-light border-0 py-3">
                 <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2">
-                   <FiInfo className="text-primary" /> Chi tiết sản phẩm
+                  <FiInfo className="text-primary" /> Chi tiết sản phẩm
                 </h5>
                 <button type="button" className="btn-close" onClick={() => setShowDetailModal(false)}></button>
               </div>
               <div className="modal-body p-0">
                 <div className="p-4">
                   <div className="d-flex gap-4 mb-4">
-                    <img 
-                      src={selectedProduct.linkImage} 
+                    <img
+                      src={selectedProduct.linkImage}
                       alt={selectedProduct.name}
                       className="rounded-3 shadow-sm border"
                       style={{ width: "120px", height: "120px", objectFit: "cover" }}
@@ -356,12 +364,12 @@ const ProductManagement = () => {
                     <div className="flex-grow-1">
                       <h4 className="fw-bold text-dark mb-1">{selectedProduct.name}</h4>
                       <div className="d-flex align-items-center gap-2 mb-2">
-                         <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
-                            {selectedProduct.categoryName}
-                         </span>
-                         <span className={`status-badge ${selectedProduct.isActive ? 'success' : 'danger'}`}>
-                            {selectedProduct.isActive ? 'Đang hoạt động' : 'Đang ẩn'}
-                         </span>
+                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
+                          {selectedProduct.categoryName}
+                        </span>
+                        <span className={`status-badge ${selectedProduct.isActive ? 'success' : 'danger'}`}>
+                          {selectedProduct.isActive ? 'Đang hoạt động' : 'Đang ẩn'}
+                        </span>
                       </div>
                       <p className="text-muted small mb-0">Cung cấp bởi: <span className="text-dark fw-medium">{selectedProduct.sellerName}</span></p>
                     </div>
@@ -392,7 +400,7 @@ const ProductManagement = () => {
                       <div className="p-3 bg-light rounded-3 border">
                         <label className="text-muted fs-7 d-block mb-1">Trạng thái kho</label>
                         <span className="fw-bold text-dark fs-5">
-                            {selectedProduct.statuss === "ConHang" ? "Còn hàng" : (selectedProduct.statuss === "HetHang" ? "Hết hàng" : "Khóa")}
+                          {selectedProduct.statuss === "ConHang" ? "Còn hàng" : (selectedProduct.statuss === "HetHang" ? "Hết hàng" : "Khóa")}
                         </span>
                       </div>
                     </div>
@@ -401,7 +409,7 @@ const ProductManagement = () => {
               </div>
               <div className="modal-footer bg-light border-0">
                 <button type="button" className="btn btn-secondary px-4" onClick={() => setShowDetailModal(false)}>Đóng</button>
-                <button type="button" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }} onClick={() => {setShowDetailModal(false); handleEdit(selectedProduct)}}>Chỉnh sửa</button>
+                <button type="button" className="btn btn-primary px-4 border-0" style={{ backgroundColor: '#2563eb' }} onClick={() => { setShowDetailModal(false); handleEdit(selectedProduct) }}>Chỉnh sửa</button>
               </div>
             </div>
           </div>
@@ -411,7 +419,7 @@ const ProductManagement = () => {
       {/* Modal Add/Edit */}
       {showForm && (
         <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-          <div className="modal-dialog modal-lg modal-dialog-centered">
+          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content overflow-hidden border-0">
               <div className="modal-header border-bottom py-3">
                 <h5 className="modal-title fw-bold text-dark">{editingProductId ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}</h5>

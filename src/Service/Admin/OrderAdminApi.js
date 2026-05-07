@@ -2,12 +2,16 @@ import axios from 'axios';
 const API = "http://localhost:5230/api/Admin";
 
 //admin 
-export async function GetAllOrder(pageNumber, pageSize, token) {
+export async function GetAllOrder(pageNumber, pageSize, token, filters = {}) {
   try {
     const respone = await axios.get(`${API}/GetOrderAdmin`, {
       params: {
         pageNumber,
-        pageSize
+        pageSize,
+        keyword: filters.keyword,
+        status: filters.status,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate
       },
       headers: {
         Authorization: `Bearer ${token}` // ⚠️ token admin (nếu API yêu cầu)

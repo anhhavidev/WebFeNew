@@ -1,8 +1,12 @@
 import axios from "axios";
-export async function OrderApi(pageNumber = 1, pageSize = 10) {
+export async function OrderApi(pageNumber = 1, pageSize = 10, status = null) {
     try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5230/api/Order/my-orders?pageNumber=${pageNumber}&pageSize=${pageSize}`, {
+        let url = `http://localhost:5230/api/Order/my-orders?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+        if (status) {
+            url += `&status=${status}`;
+        }
+        const res = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

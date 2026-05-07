@@ -2,12 +2,16 @@ import axios from 'axios';
 
 const API = "http://localhost:5230/api/Seller";
 //seller
-export async function GetAllOrderSeller(pageNumber , pageSize , token){
-    try {
-    const respone = await axios.get(`${API}/Order-Seller`,{
-        params: {
+export async function GetAllOrderSeller(pageNumber, pageSize, token, filters = {}) {
+  try {
+    const respone = await axios.get(`${API}/Order-Seller`, {
+      params: {
         pageNumber,
-        pageSize
+        pageSize,
+        keyword: filters.keyword,
+        status: filters.status,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate
       },
       headers: {
         Authorization: `Bearer ${token}` // ⚠️ token admin (nếu API yêu cầu)

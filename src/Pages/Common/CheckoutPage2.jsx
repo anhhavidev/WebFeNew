@@ -253,7 +253,11 @@ export default function SimpleCheckoutPage() {
           text: 'Thanh toán khi nhận hàng.',
           confirmButtonColor: '#28a745'
         });
-        navigate('/cod-result');
+
+        const match = result.match(/#(\d+)/);
+        const newOrderId = match ? match[1] : null;
+
+        navigate('/cod-result', { state: { orderId: newOrderId } });
       } else {
         if (!result || typeof result !== "string") {
           return toast.error("❌ Không nhận được URL thanh toán hợp lệ.");
@@ -308,7 +312,7 @@ export default function SimpleCheckoutPage() {
       setMode("select"); // quay về màn chọn địa chỉ
     } catch (err) {
       console.error("❌ Lỗi thêm/sửa địa chỉ:", err);
-      toast.error("Thêm/Sửa địa chỉ thất bại!");
+      toast.error(err.message || "Thêm/Sửa địa chỉ thất bại!");
     }
   };
 
@@ -344,7 +348,7 @@ export default function SimpleCheckoutPage() {
       toast.success("Đã xoá địa chỉ!");
     } catch (err) {
       console.error("❌ Lỗi xoá địa chỉ:", err);
-      toast.error("Không thể xoá địa chỉ.");
+      toast.error(err.message || "Không thể xoá địa chỉ.");
     }
   };
 

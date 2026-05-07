@@ -23,11 +23,16 @@ export async function AssignShipperToOrder(orderId, shipperId, token) {
 2️⃣ Lấy danh sách đơn của shipper
 GET /api/shipper/my-orders
 -------------------------------------------- */
-export async function GetOrdersForShipper(token, pageNumber = 1, pageSize = 10) {
+export async function GetOrdersForShipper(token, pageNumber = 1, pageSize = 10, filters = {}) {
   try {
     const res = await axios.get(`${API}/my-orders`, {
       headers: { Authorization: `Bearer ${token}` },
-      params: { pageNumber, pageSize } // 🔹 Gửi kèm query string
+      params: { 
+        pageNumber, 
+        pageSize,
+        keyword: filters.keyword,
+        status: filters.status
+      } // 🔹 Gửi kèm query string
     });
     return res.data;
   } catch (error) {

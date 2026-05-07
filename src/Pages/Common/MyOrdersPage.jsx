@@ -46,7 +46,8 @@ export default function MyOrdersPage() {
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const data = await OrderApi(pageNumber, pageSize);
+        const statusParam = selectedStatus === "all" ? null : selectedStatus;
+        const data = await OrderApi(pageNumber, pageSize, statusParam);
         setOrders(data.items);
         setTotalPages(data.totalPages); // cần backend trả về
       } catch (err) {
@@ -57,7 +58,7 @@ export default function MyOrdersPage() {
     }
 
     fetchOrders();
-  }, [pageNumber]);
+  }, [pageNumber, selectedStatus]);
   async function handleConfirmDelivery(orderId) {
     const result = await Swal.fire({
       title: 'Xác nhận nhận hàng?',
@@ -166,12 +167,8 @@ export default function MyOrdersPage() {
 
 
   useEffect(() => {
-    if (selectedStatus === "all") {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter(o => o.status === selectedStatus));
-    }
-  }, [selectedStatus, orders]);
+    setFilteredOrders(orders);
+  }, [orders]);
   function handleExpire(orderId) {
     setOrders((prev) =>
       prev.map((o) =>
@@ -192,7 +189,7 @@ export default function MyOrdersPage() {
   }
   return (
     <UserLayout>
-      <div className="container mt-5">
+      <div className="cp-container">
         <h2 className="mb-4">🧾 Đơn hàng của tôi</h2>
 
         {/* Bộ lọc trạng thái */}
@@ -201,7 +198,10 @@ export default function MyOrdersPage() {
           <select
             className="form-select w-auto"
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
+            onChange={(e) => {
+              setSelectedStatus(e.target.value);
+              setPageNumber(1);
+            }}
           >
             <option value="all">Tất cả</option>
             <option value="Pending">Chờ xác nhận</option>

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { GetAllOrder, CancelOrderAdmin, GetOrderDetailAdmin } from "../Service/Admin/OrderAdminApi";
+import { useDashboardApi } from "../Service/Admin/DashboardApi";
 import useAuth from '../Hooks/useAuth';
 import { useNavigate } from "react-router-dom";
 import "./AdminDashboard.css";
 import { FiSearch, FiFilter, FiDownload, FiEye, FiTrash2 } from "react-icons/fi";
 
 export default function ManagerDonHang() {
+    const { getOrderStatus, getSummary } = useDashboardApi();
     const [orders, setOrders] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
@@ -17,28 +19,78 @@ export default function ManagerDonHang() {
     // Stats
     const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0, cancelled: 0 });
 
+    // Filter states
+    const [searchTerm, setSearchTerm] = useState(""); // Local input state
+    const [keyword, setKeyword] = useState("");      // State that triggers API
+    const [statusFilter, setStatusFilter] = useState("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+
+    // Fetch real stats from Dashboard API
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const [summaryRes, statusRes] = await Promise.all([
+                    getSummary(),
+                    getOrderStatus()
+                ]);
+                
+                const sumData = summaryRes?.data || {};
+                const statItems = statusRes?.data?.items || [];
+                
+                let pendingCount = 0;
+                let completedCount = 0;
+                let cancelledCount = 0;
+                
+                statItems.forEach(item => {
+                    const lbl = item.label;
+                    if (['Pending', 'ReadyToShip', 'Assigned', 'Chờ xác nhận', 'Chờ lấy hàng', 'Đã gán shipper'].includes(lbl)) {
+                        pendingCount += item.count;
+                    } else if (['Delivered', 'Received', 'Đã giao thành công', 'Khách đã nhận'].includes(lbl)) {
+                        completedCount += item.count;
+                    } else if (['Cancelled', 'FailedDelivery', 'PartiallyCancelled', 'Đã hủy', 'Giao thất bại'].includes(lbl)) {
+                        cancelledCount += item.count;
+                    }
+                });
+                
+                setStats({
+                    total: sumData.totalOrders || 0,
+                    pending: pendingCount,
+                    completed: completedCount,
+                    cancelled: cancelledCount
+                });
+            } catch (error) {
+                console.error("Lỗi khi lấy thống kê đơn hàng:", error);
+            }
+        };
+        fetchStats();
+    }, []);
+
     useEffect(() => {
         const fetchData = async () => {
             const token = await ensureTokenValid();
             if (!token) return;
 
             try {
-                const data = await GetAllOrder(currentPage, 10, token);
+                const filters = {
+                    keyword,
+                    status: statusFilter,
+                    fromDate,
+                    toDate
+                };
+                const data = await GetAllOrder(currentPage, 10, token, filters);
                 const fetchedOrders = data.items.map(item => ({
                     ...item,
                     originalStatus: item.status
                 }));
                 setOrders(fetchedOrders);
                 setTotalPages(data.totalPages);
-
-                // Calculate dummy stats based on current page for demo purposes
-                // In a real app, this should come from a separate API endpoint
-                setStats({
-                    total: data.totalCount || 3456, // fallback to reference design number
-                    pending: fetchedOrders.filter(o => o.status === 'Pending').length || 234,
-                    completed: fetchedOrders.filter(o => o.status === 'Delivered' || o.status === 'Received').length || 3102,
-                    cancelled: fetchedOrders.filter(o => o.status === 'Cancelled').length || 120
-                });
+                
+                // Nếu chưa có stats tổng quan, cập nhật tạm tổng số đơn từ kết quả trả về
+                setStats(prev => ({
+                    ...prev,
+                    total: prev.total > 0 ? prev.total : (data.totalCount || 0)
+                }));
 
             } catch (error) {
                 console.error("Lỗi khi lấy danh sách đơn hàng:", error);
@@ -46,7 +98,7 @@ export default function ManagerDonHang() {
         };
 
         fetchData();
-    }, [currentPage]);
+    }, [currentPage, keyword, statusFilter, fromDate, toDate]);
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
@@ -160,26 +212,75 @@ export default function ManagerDonHang() {
                 </div>
             </div>
 
-            <div className="table-container">
-                {/* Actions Bar */}
-                <div className="table-header-actions">
-                    <div className="table-search">
-                        <FiSearch className="search-icon" />
+        <div className="container-fluid px-4">
+            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                <h4 className="mb-0 d-flex align-items-center gap-2" style={{ fontSize: "1.25rem", fontWeight: "700" }}>
+                    📋 <span className="text-dark">Quản lý tất cả đơn hàng</span>
+                </h4>
+                
+                {/* Premium Filter Bar */}
+                <div className="filter-bar-premium rounded shadow-sm border">
+                    <div className="search-group-premium">
+                        <FiSearch className="text-muted" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm đơn hàng..."
+                            placeholder="Mã đơn, khách, email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && setKeyword(searchTerm)}
                         />
+                        <button className="btn-search" onClick={() => setKeyword(searchTerm)}>
+                            Tìm
+                        </button>
                     </div>
                     
-                    <div className="table-actions">
-                        <button className="btn-table-action outline">
-                            <FiFilter className="w-5 h-5" /> Lọc
-                        </button>
-                        <button className="btn-table-action outline">
-                            <FiDownload className="w-5 h-5" /> Xuất Excel
+                    <div className="filter-controls-premium">
+                        <select 
+                            className="select-premium"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">Trạng thái</option>
+                            <option value="Pending">Chờ xác nhận</option>
+                            <option value="Confirmed">Đã xác nhận</option>
+                            <option value="ReadyToShip">Chờ lấy hàng</option>
+                            <option value="Shipping">Đang giao</option>
+                            <option value="Delivered">Đã giao thành công</option>
+                            <option value="Received">Khách đã nhận</option>
+                            <option value="Cancelled">Đã hủy</option>
+                            <option value="FailedDelivery">Giao thất bại</option>
+                        </select>
+
+                        <div className="date-range-premium">
+                            <span>Từ</span>
+                            <input 
+                                type="date" 
+                                value={fromDate}
+                                onChange={(e) => setFromDate(e.target.value)}
+                            />
+                            <span>Đến</span>
+                            <input 
+                                type="date" 
+                                value={toDate}
+                                onChange={(e) => setToDate(e.target.value)}
+                            />
+                        </div>
+
+                        <button 
+                            className="btn-clear-premium" 
+                            onClick={() => {
+                                setSearchTerm("");
+                                setKeyword("");
+                                setStatusFilter("");
+                                setFromDate("");
+                                setToDate("");
+                            }}
+                        >
+                            Xóa lọc
                         </button>
                     </div>
                 </div>
+            </div>
 
                 {/* Orders Table */}
                 <div className="admin-table-wrapper">
@@ -241,11 +342,11 @@ export default function ManagerDonHang() {
                                     Trước
                                 </button>
                             </li>
-                            <li className="page-item disabled">
-                                <span className="page-link border-0 bg-transparent text-dark fw-medium">
-                                    Trang {currentPage} / {totalPages}
-                                </span>
-                            </li>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                                <li key={num} className={`page-item ${currentPage === num ? "active" : ""}`}>
+                                    <button className="page-link" onClick={() => handlePageChange(num)}>{num}</button>
+                                </li>
+                            ))}
                             <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
                                 <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
                                     Sau

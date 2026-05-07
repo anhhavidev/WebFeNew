@@ -17,6 +17,15 @@ const ProductForm = ({ categories, productId, onSave, onCancel }) => {
 
   const [preview, setPreview] = useState(null);
   const [galleryPreview, setGalleryPreview] = useState([]);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const renderError = (field) => {
+    const errorList = validationErrors[field] || validationErrors[field.charAt(0).toUpperCase() + field.slice(1)];
+    if (errorList && errorList.length > 0) {
+      return <div className="text-danger small mt-1">{errorList[0]}</div>;
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (productId) {
@@ -115,109 +124,40 @@ const ProductForm = ({ categories, productId, onSave, onCancel }) => {
     setGalleryPreview(files.map(f => URL.createObjectURL(f))); // preview file mới
   };
 
-  const handleSubmit = (e) => {
-    // e.preventDefault();
-    // const payload = new FormData();
-
-    // payload.append("Name", formData.name);
-    // payload.append("Description", formData.description);
-    // payload.append("OriginalPrice", formData.originalPrice);
-    // if (formData.discountPercent) {
-    //   payload.append("DiscountPercent", formData.discountPercent);
-    // }
-    // payload.append("StockQuantity", formData.stockQuantity);
-    // payload.append("CategoryId", formData.categoryId);
-    // payload.append("IsActive", formData.isActive);
-    // payload.append("Weight", formData.weight);
-    // if (formData.image) payload.append("Image", formData.image);
-    // if (formData.imageGallery && formData.imageGallery.length > 0) {
-    //   formData.imageGallery.forEach((file) => payload.append("ImageGallery", file));
-    // }
-
-    // onSave(payload);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // onSave(formData); // truyền object chứ không phải FormData
+    setValidationErrors({});
     const payload = { ...formData };
     if (!productId) delete payload.productId;
-    onSave(payload);
+    try {
+      await onSave(payload);
+    } catch (err) {
+      if (err.validationErrors) {
+        setValidationErrors(err.validationErrors);
+      }
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="mb-3">
-        <label className="form-label">Tên sản phẩm</label>
-        <input
-          type="text"
-          name="name"
-          className="form-control"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Mô tả</label>
-        <textarea
-          name="description"
-          className="form-control"
-          value={formData.description}
-          onChange={handleChange}
-          rows="3"
-        />
-      </div>
-
       <div className="row">
-        <div className="col-md-4 mb-3">
-          <label className="form-label">Giá gốc</label>
+        <div className="col-md-8 mb-2">
+          <label className="form-label fw-semibold">Tên sản phẩm</label>
           <input
             type="text"
-            name="originalPrice"
-            className="form-control"
-            value={formatCurrency(formData.originalPrice)}
+            name="name"
+            className={`form-control form-control-sm ${renderError("name") ? "is-invalid" : ""}`}
+            value={formData.name}
             onChange={handleChange}
             required
           />
-
+          {renderError("name")}
         </div>
-        <div className="col-md-4 mb-3">
-          <label className="form-label">Phần trăm giảm (%)</label>
-          <input
-            type="number"
-            name="discountPercent"
-            className="form-control"
-            value={formData.discountPercent}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="col-md-4 mb-3">
-          <label className="form-label">Giá sau giảm</label>
-          <input
-            type="text"
-            className="form-control"
-            value={formatCurrency(formData.discountedPrice)}
-            readOnly
-          />
-        </div>
-      </div>
-
-      <div className="row">
-        <div className="col-md-6 mb-3">
-          <label className="form-label">Số lượng tồn kho</label>
-          <input
-            type="number"
-            name="stockQuantity"
-            className="form-control"
-            value={formData.stockQuantity}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="col-md-6 mb-3">
-          <label className="form-label">Danh mục</label>
+        <div className="col-md-4 mb-2">
+          <label className="form-label fw-semibold">Danh mục</label>
           <select
             name="categoryId"
-            className="form-select"
+            className={`form-select form-select-sm ${renderError("categoryId") ? "is-invalid" : ""}`}
             value={formData.categoryId}
             onChange={handleChange}
             required
@@ -229,12 +169,83 @@ const ProductForm = ({ categories, productId, onSave, onCancel }) => {
               </option>
             ))}
           </select>
+          {renderError("categoryId")}
+        </div>
+      </div>
+
+      <div className="mb-2">
+        <label className="form-label fw-semibold">Mô tả</label>
+        <textarea
+          name="description"
+          className={`form-control form-control-sm ${renderError("description") ? "is-invalid" : ""}`}
+          value={formData.description}
+          onChange={handleChange}
+          rows="2"
+        />
+        {renderError("description")}
+      </div>
+
+      <div className="row">
+        <div className="col-md-3 mb-2">
+          <label className="form-label fw-semibold">Giá gốc</label>
+          <input
+            type="text"
+            name="originalPrice"
+            className={`form-control form-control-sm ${renderError("originalPrice") ? "is-invalid" : ""}`}
+            value={formatCurrency(formData.originalPrice)}
+            onChange={handleChange}
+            required
+          />
+          {renderError("originalPrice")}
+        </div>
+        <div className="col-md-3 mb-2">
+          <label className="form-label fw-semibold">Giảm (%)</label>
+          <input
+            type="number"
+            name="discountPercent"
+            className={`form-control form-control-sm ${renderError("discountPercent") ? "is-invalid" : ""}`}
+            value={formData.discountPercent}
+            onChange={handleChange}
+          />
+          {renderError("discountPercent")}
+        </div>
+        <div className="col-md-3 mb-2">
+          <label className="form-label fw-semibold">Giá sau giảm</label>
+          <input
+            type="text"
+            className="form-control form-control-sm"
+            value={formatCurrency(formData.discountedPrice)}
+            readOnly
+          />
+        </div>
+        <div className="col-md-3 mb-2">
+          <label className="form-label fw-semibold">Tồn kho</label>
+          <input
+            type="number"
+            name="stockQuantity"
+            className={`form-control form-control-sm ${renderError("stockQuantity") ? "is-invalid" : ""}`}
+            value={formData.stockQuantity}
+            onChange={handleChange}
+            required
+          />
+          {renderError("stockQuantity")}
         </div>
       </div>
 
       <div className="row">
-        <div className="col-md-6 mb-3">
-          <div className="form-check mt-4">
+        <div className="col-md-6 mb-2">
+          <label className="form-label fw-semibold">Trọng lượng (gram)</label>
+          <input
+            type="number"
+            name="weight"
+            className={`form-control form-control-sm ${renderError("weight") ? "is-invalid" : ""}`}
+            value={formData.weight}
+            onChange={handleChange}
+          />
+          {renderError("weight")}
+        </div>
+        <div className="col-md-6 mb-2 d-flex align-items-end">
+          <div className="form-check mb-1">
             <input
               type="checkbox"
               name="isActive"
@@ -242,67 +253,55 @@ const ProductForm = ({ categories, productId, onSave, onCancel }) => {
               checked={formData.isActive}
               onChange={handleChange}
             />
-            <label className="form-check-label">Kích hoạt</label>
+            <label className="form-check-label fw-semibold">Kích hoạt sản phẩm</label>
           </div>
         </div>
+      </div>
+
+      <div className="row">
         <div className="col-md-6 mb-3">
-          <label className="form-label">Trọng lượng (gram)</label>
+          <label className="form-label fw-semibold">Ảnh sản phẩm</label>
           <input
-            type="number"
-            name="weight"
-            className="form-control"
-            value={formData.weight}
-            onChange={handleChange}
+            type="file"
+            name="image"
+            className="form-control form-control-sm"
+            onChange={handleFileChange}
+            accept="image/*"
           />
+          {(preview || formData.image) && (
+            <img
+              src={preview || formData.image}
+              alt="Preview"
+              style={{ width: "60px", height: "60px", objectFit: "cover", marginTop: "5px", borderRadius: "5px" }}
+            />
+          )}
+        </div>
+
+        <div className="col-md-6 mb-3">
+          <label className="form-label fw-semibold">Ảnh phụ (gallery)</label>
+          <input
+            type="file"
+            name="imageGallery"
+            className="form-control form-control-sm"
+            onChange={handleGalleryChange}
+            accept="image/*"
+            multiple
+          />
+          {galleryPreview.length > 0 && (
+            <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+              {galleryPreview.map((url, idx) => (
+                <img key={idx} src={url} alt={`Gallery ${idx}`} style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "5px" }} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="mb-3">
-        <label className="form-label">Ảnh sản phẩm</label>
-        <input
-          type="file"
-          name="image"
-          className="form-control"
-          onChange={handleFileChange}
-          accept="image/*"
-        />
-        {/* Nếu có ảnh cũ từ DB hoặc ảnh mới chọn */}
-        {(preview || formData.image) && (
-          <img
-            src={preview || formData.image}
-            alt="Preview"
-            style={{ width: "100px", marginTop: "10px" }}
-          />
-        )}
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Ảnh phụ (gallery)</label>
-        <input
-          type="file"
-          name="imageGallery"
-          className="form-control"
-          onChange={handleGalleryChange}
-          accept="image/*"
-          multiple
-        />
-
-        {/* Hiển thị preview */}
-        {galleryPreview.length > 0 && (
-          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-            {galleryPreview.map((url, idx) => (
-              <img key={idx} src={url} alt={`Gallery ${idx}`} style={{ width: "100px" }} />
-            ))}
-          </div>
-        )}
-      </div>
-
-
-      <div className="d-flex justify-content-end gap-2">
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+      <div className="d-flex justify-content-end gap-2 mt-1">
+        <button type="button" className="btn btn-secondary btn-sm px-4" onClick={onCancel}>
           Hủy
         </button>
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn btn-primary btn-sm px-4">
           {productId ? "Cập nhật" : "Thêm mới"}
         </button>
       </div>

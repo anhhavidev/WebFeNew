@@ -105,6 +105,59 @@ export default function ProductDetail() {
     }
   };
 
+  const handleBuyNow = async () => {
+    if (!user) {
+      const result = await MySwal.fire({
+        title: "Bạn chưa đăng nhập",
+        text: "Vui lòng đăng nhập để mua sản phẩm!",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Đăng nhập ngay",
+        cancelButtonText: "Để sau",
+        confirmButtonColor: "#2563eb",
+        cancelButtonColor: "#64748b",
+        borderRadius: "15px"
+      });
+
+      if (result.isConfirmed) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    const loadingToast = toast.loading("Đang xử lý...");
+    try {
+      const token = await ensureTokenValid();
+      if (!token) {
+        toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
+        navigate("/login");
+        return;
+      }
+
+      const result = await addProductToCart(product.productId, qty, token);
+      if (result.isSuccess) {
+        const res = await getCartItems(token);
+        const sellerGroups = res.data?.sellerGroups || [];
+        let total = 0;
+        sellerGroups.forEach(group => {
+          if (group.cartItems) {
+            group.cartItems.forEach(item => {
+              total += item.soLuong;
+            });
+          }
+        });
+        setCartCount(total);
+        toast.success("Đã chuẩn bị giỏ hàng!", { id: loadingToast });
+        navigate("/cart");
+      } else {
+        toast.error(result.message || "Hết hàng hoặc lỗi.", { id: loadingToast });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Thao tác thất bại.", { id: loadingToast });
+    }
+  };
+
   /* ───────── Loading ───────── */
   if (loading) return (
     <UserLayout>
@@ -275,7 +328,13 @@ export default function ProductDetail() {
                 {addedToCart ? 'Đã thêm vào giỏ!' : 'Thêm vào giỏ hàng'}
               </button>
 
-              <Link to="/cart" className="pd-buy-btn">Mua ngay</Link>
+              <button 
+                className="pd-buy-btn" 
+                onClick={handleBuyNow}
+                disabled={!inStock}
+              >
+                Mua ngay
+              </button>
             </div>
 
             {/* Trust badges */}
