@@ -31,7 +31,8 @@ const ProductForm = ({ categories, productId, onSave, onCancel }) => {
     if (productId) {
       const fetchProduct = async () => {
         try {
-          const data = await getProductById(productId);
+          const res = await getProductById(productId);
+          const data = res.data || res;
           const discount = data.discountPercent || 0;
           const originalPrice = data.originalPrice || 0;
 

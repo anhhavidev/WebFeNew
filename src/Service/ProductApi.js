@@ -1,280 +1,53 @@
-const API_URL = "http://localhost:5230/api/Product";
+// Service xử lý các API liên quan đến sản phẩm
+import axiosClient from "./axiosClient";
 
-// Lấy tất cả sản phẩm
-export async function getAllProducts() {
-  try {
-    const response = await fetch(`${API_URL}/all`);
-    if (!response.ok) throw new Error("Lỗi API sản phẩm");
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
-export const getPaginatedProducts = async (filter = {}) => {
-  const query = new URLSearchParams();
+const ENDPOINT = "/Product";
 
-  // Duyệt qua các filter truyền lên
-  Object.entries(filter).forEach(([key, value]) => {
-    if (value !== null && value !== undefined && value !== '') {
-      query.append(key, value);
-    }
-  });
-
-  const url = `http://localhost:5230/api/Product/paging?${query.toString()}`;
-
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Lỗi khi gọi API sản phẩm");
-
-  return await response.json(); // PageResult<ProductDTO>
-};
-//lấy danh sách sản phẩm adimin 
-export const getPaginatedProductAdmin = async (filter = {}) => {
-  const query = new URLSearchParams();
-
-  // Duyệt qua các filter truyền lên
-  Object.entries(filter).forEach(([key, value]) => {
-    if (value !== null && value !== undefined && value !== '') {
-      query.append(key, value);
-    }
-  });
-
-  const url = `http://localhost:5230/api/Product/admin/paging?${query.toString()}`;
-
-  // 👇 Lấy token từ localStorage (đặt khi login)
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(url, {
-    headers: {
-      "Authorization": `Bearer ${token}`, // 👈 truyền token ở đây
-    },
-  });
-
-  if (!response.ok) throw new Error("Lỗi khi gọi API sản phẩm");
-
-  return await response.json(); // PageResult<ProductDTO>
-};
-export const getPaginatedProducSeller = async (filter = {}) => {
-  const query = new URLSearchParams();
-
-  // Duyệt qua các filter truyền lên
-  Object.entries(filter).forEach(([key, value]) => {
-    if (value !== null && value !== undefined && value !== '') {
-      query.append(key, value);
-    }
-  });
-
-  const url = `http://localhost:5230/api/Product/Seller/paging?${query.toString()}`;
-
-  // 👇 Lấy token từ localStorage (đặt khi login)
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(url, {
-    headers: {
-      "Authorization": `Bearer ${token}`, // 👈 truyền token ở đây
-    },
-  });
-
-  if (!response.ok) throw new Error("Lỗi khi gọi API sản phẩm");
-
-  return await response.json(); // PageResult<ProductDTO>
+// Lấy danh sách tất cả sản phẩm (có params lọc/phân trang)
+export const getAllProducts = async (params) => {
+  return await axiosClient.get(`${ENDPOINT}/paging`, { params });
 };
 
+// Lấy chi tiết sản phẩm theo ID
+export const getProductById = async (id) => {
+  return await axiosClient.get(`${ENDPOINT}/${id}`);
+};
 
-// Lấy sản phẩm theo danh mục
-export async function getProductsByCategory(categoryId) {
-  try {
-    const response = await fetch(`${API_URL}/by-category/${categoryId}`);
-    if (!response.ok) throw new Error("Lỗi API sản phẩm theo danh mục");
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
+// Tạo sản phẩm mới
+export const createProduct = async (data) => {
+  return await axiosClient.post(`${ENDPOINT}/add`, data);
+};
 
-// Thêm sản phẩm (POST)
-export async function addProduct(product) {
-  try {
-    const formData = new FormData();
+// Cập nhật thông tin sản phẩm
+export const updateProduct = async (id, data) => {
+  return await axiosClient.put(`${ENDPOINT}/update/${id}`, data);
+};
 
-    formData.append("Name", product.name);
-    formData.append("Description", product.description);
-    if (product.image) {
-      formData.append("Image", product.image);
-    }
-    formData.append("CategoryId", product.categoryId);
-    formData.append("StockQuantity", product.stockQuantity);
-    formData.append("OriginalPrice", product.originalPrice);
-    formData.append("DiscountPercent", product.discountPercent ?? "");
-    formData.append("IsActive", product.isActive);
-    formData.append("Weight", product.weight);
+// Xóa sản phẩm (soft delete)
+export const deleteProduct = async (id) => {
+  return await axiosClient.delete(`${ENDPOINT}/${id}`);
+};
 
-    if (product.imageGallery && product.imageGallery.length > 0) {
-      for (let file of product.imageGallery) {
-        formData.append("ImageGallery", file);
-      }
-    }
+export const getPaginatedProducts = async (filter) => {
+  return await axiosClient.get(`${ENDPOINT}/paging`, { params: filter });
+};
 
-    for (let [k, v] of formData.entries()) {
-      console.log(k, v);
-    }
+export const getProductsByCategory = async (categoryId) => {
+  return await axiosClient.get(`${ENDPOINT}/paging`, { params: { CategoryId: categoryId } });
+};
 
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_URL}/add`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
+export const getPaginatedProductSeller = async (filter) => {
+  return await axiosClient.get(`${ENDPOINT}/Seller/paging`, { params: filter });
+};
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.errors) {
-        const err = new Error("Validation Error");
-        err.validationErrors = errorData.errors;
-        throw err;
-      }
-      throw new Error(errorData?.message || "Thêm sản phẩm thất bại");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Lỗi trong addProduct:", error);
-    throw error;
-  }
-}
+export const getPaginatedProductAdmin = async (filter) => {
+  return await axiosClient.get(`${ENDPOINT}/Admin/paging`, { params: filter });
+};
 
+export const addProduct = async (data) => {
+  return await axiosClient.post(`${ENDPOINT}/add`, data);
+};
 
-
-// Thêm sản phẩm có ảnh
-export async function addProductWithImage(product) {
-  try {
-    const formData = new FormData();
-    formData.append("name", product.name);
-    formData.append("description", product.description);
-    formData.append("price", product.price);
-    formData.append("stockQuantity", product.stockQuantity);
-    formData.append("categoryId", product.categoryId);
-    formData.append("image", product.image); // ⬅️ trùng với tên trong ProductRequest (BE)
-
-    const response = await fetch("http://localhost:5230/api/Product", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Thêm sản phẩm thất bại");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("API thêm sản phẩm:", error);
-    throw error;
-  }
-}
-// Ẩn / bật sản phẩm (Admin)
-export async function toggleProductStatus(id) {
-  try {
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(`http://localhost:5230/api/Product/toggle-status/${id}`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) throw new Error("Ẩn / bật sản phẩm thất bại");
-
-    return await response.json(); // ResponeDTO
-  } catch (error) {
-    console.error("Lỗi toggleProductStatus:", error);
-    throw error;
-  }
-}
-
-// Sửa sản phẩm (PUT)
-export async function updateProduct(id, product) {
-  const formData = new FormData();
-
-  formData.append("Name", product.name);
-  formData.append("Description", product.description);
-  formData.append("CategoryId", product.categoryId);
-  formData.append("StockQuantity", product.stockQuantity);
-  formData.append("OriginalPrice", product.originalPrice);
-  formData.append("DiscountPercent", product.discountPercent ?? "");
-  formData.append("IsActive", product.isActive);
-  formData.append("Weight", product.weight);
-
-  if (product.image) formData.append("Image", product.image);
-  if (product.imageGallery && product.imageGallery.length > 0) {
-    product.imageGallery.forEach((file) => formData.append("ImageGallery", file));
-  }
-
-  const token = localStorage.getItem("token");
-  const response = await fetch(`${API_URL}/update/${id}`, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    if (errorData && errorData.errors) {
-      const err = new Error("Validation Error");
-      err.validationErrors = errorData.errors;
-      throw err;
-    }
-    throw new Error(errorData?.message || "Cập nhật sản phẩm thất bại");
-  }
-  return await response.json();
-}
-
-export async function getProductById(id) {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_URL}/${id}`, {
-      headers: {
-        "Authorization": `Bearer ${token}`
-      }
-    });
-    if (!response.ok) throw new Error("Lỗi API lấy chi tiết sản phẩm");
-    return await response.json();
-  } catch (error) {
-    console.error("getProductById error:", error);
-    throw error;
-  }
-}
-
-// Xóa sản phẩm (DELETE)
-// Xóa sản phẩm (DELETE)
-export async function deleteProduct(id) {
-  try {
-    const response = await fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`, // ✅ thêm nếu API có Authorize
-      },
-    });
-    if (!response.ok) throw new Error("Xóa sản phẩm thất bại");
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-}
-
-
-
-export async function getCategories() {
-  try {
-    const response = await fetch('http://localhost:5230/api/Category/all');
-    if (!response.ok) throw new Error('Lỗi API danh mục');
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
+export const toggleProductStatus = async (id) => {
+  return await axiosClient.put(`${ENDPOINT}/toggle-status/${id}`);
+};

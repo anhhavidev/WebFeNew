@@ -4,7 +4,7 @@ import PrivateShipper from "./PrivateShipper";   // bảo vệ Shipper
 import ShipperDonHang from "../Admin/ShipperDashboard"; // giao diện Shipper
 import OrderManagerShipper from "../Shipper/OrderManagerShipper";
 import ShipperDashboard from "../Admin/ShipperDashboard";
-import ShipperDashboardChar from "../Shipper/ShipperDashboardChar";
+import ShipperDashboardChart from "../Shipper/ShipperDashboardChar";
 import UserProfile from "../Admin/UserProfile";
 
 const ShipperRoutes = () => {
@@ -12,7 +12,7 @@ const ShipperRoutes = () => {
     <Routes>
 
       <Route path="/shipper/dashboard/" element={<  PrivateShipper><ShipperDashboard /></PrivateShipper>}>
-        <Route index element={<ShipperDashboardChar></ShipperDashboardChar>} />
+        <Route index element={<ShipperDashboardChart></ShipperDashboardChart>} />
         {/* <Route path="products" element={<P />} /> */}
         <Route path="orders" element={<OrderManagerShipper />} />
         <Route path="profile" element={<UserProfile />} />

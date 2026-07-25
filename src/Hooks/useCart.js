@@ -1,3 +1,4 @@
+// Hook quản lý giỏ hàng (lấy, thêm, sửa, xóa sản phẩm)
 import { useEffect, useState } from "react";
 import {
   getCartItems,
@@ -14,12 +15,13 @@ export default function useCart() {
 
   const token = localStorage.getItem("token");
 
+  // Lấy dữ liệu giỏ hàng từ server
   const fetchCart = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getCartItems(token);
-      setCartItems(data);
+      setCartItems(data.data?.sellerGroups || data || []);
     } catch (err) {
       setError("Không thể tải giỏ hàng.");
       setCartItems([]);
@@ -28,6 +30,7 @@ export default function useCart() {
     }
   };
 
+  // Thêm sản phẩm vào giỏ hàng
   const addItem = async (productId, quantity) => {
     try {
       await addToCart(productId, quantity, token);
@@ -37,6 +40,7 @@ export default function useCart() {
     }
   };
 
+  // Xóa sản phẩm khỏi giỏ hàng
   const removeItem = async (productId) => {
     try {
       await removeFromCart(productId, token);
@@ -46,6 +50,7 @@ export default function useCart() {
     }
   };
 
+  // Cập nhật số lượng sản phẩm trong giỏ hàng
   const updateItem = async (productId, newQty) => {
     try {
       await updateCartItem(productId, newQty, token);
@@ -55,6 +60,7 @@ export default function useCart() {
     }
   };
 
+  // Xóa toàn bộ giỏ hàng
   const clear = async () => {
     try {
       await clearCart(token);

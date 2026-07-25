@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './ForgotPassword.css';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routePaths';
 import { FiMail, FiKey, FiLock, FiShield, FiArrowRight, FiRefreshCw } from 'react-icons/fi';
 const ForgotPassword = () => {
   const [step, setStep] = useState(1);
@@ -71,7 +72,7 @@ const ForgotPassword = () => {
     setMessage(data.message);
 
     if (res.ok && data.isSuccess) {
-      navigate('/login');
+      navigate(ROUTES.LOGIN);
     }
   };
 

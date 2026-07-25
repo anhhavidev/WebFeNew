@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routePaths';
 import UserLayout from '../../layout1/UserLayout';
 import { getProductById } from '../../Service/ProductApi';
 import { addProductToCart } from '../../Service/cartApi';
@@ -36,8 +37,8 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
     getProductById(id)
-      .then(data => {
-        setProduct(data);
+      .then(res => {
+        setProduct(res.data || res);
         setActiveImg(0);
       })
       .catch(() => setError('Không tìm thấy sản phẩm.'))
@@ -64,7 +65,7 @@ export default function ProductDetail() {
       });
 
       if (result.isConfirmed) {
-        navigate("/login");
+        navigate(ROUTES.LOGIN);
       }
       return;
     }
@@ -74,7 +75,7 @@ export default function ProductDetail() {
       const token = await ensureTokenValid();
       if (!token) {
         toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
-        navigate("/login");
+        navigate(ROUTES.LOGIN);
         return;
       }
 
@@ -120,7 +121,7 @@ export default function ProductDetail() {
       });
 
       if (result.isConfirmed) {
-        navigate("/login");
+        navigate(ROUTES.LOGIN);
       }
       return;
     }
@@ -130,7 +131,7 @@ export default function ProductDetail() {
       const token = await ensureTokenValid();
       if (!token) {
         toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
-        navigate("/login");
+        navigate(ROUTES.LOGIN);
         return;
       }
 
@@ -148,7 +149,7 @@ export default function ProductDetail() {
         });
         setCartCount(total);
         toast.success("Đã chuẩn bị giỏ hàng!", { id: loadingToast });
-        navigate("/cart");
+        navigate(ROUTES.CART);
       } else {
         toast.error(result.message || "Hết hàng hoặc lỗi.", { id: loadingToast });
       }
@@ -201,7 +202,7 @@ export default function ProductDetail() {
 
         {/* ── Breadcrumb ── */}
         <nav className="pd-breadcrumb">
-          <Link to="/">Trang chủ</Link>
+          <Link to={ROUTES.HOME}>Trang chủ</Link>
           <FiChevronRight size={13} />
           {product.categoryName && (
             <>

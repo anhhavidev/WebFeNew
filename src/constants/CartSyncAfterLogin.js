@@ -1,3 +1,4 @@
+// Component tự động đồng bộ giỏ hàng local lên server sau khi đăng nhập
 import { useEffect } from "react";
 import { getLocalCart, clearLocalCart } from "../utils/cartStorage";
 import { syncCartToServer, getCartItems } from "../Service/cartApi";
@@ -29,7 +30,7 @@ export default function CartSyncAfterLogin() {
 
       try {
         const result = await getCartItems(token);
-        if (result.success && result.data?.sellerGroups) {
+        if (result.isSuccess && result.data?.sellerGroups) {
           setCartItems(result.data.sellerGroups); // Lưu luôn sellerGroups
           const totalCount = result.data.sellerGroups.reduce(
             (sum, seller) => sum + seller.cartItems.reduce((s, item) => s + item.soLuong, 0),

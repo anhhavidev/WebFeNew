@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { ROUTES } from '../../constants/routePaths';
 import UserLayout from '../../layout1/UserLayout';
 import { FaCheckCircle, FaTimesCircle, FaReceipt, FaUndo } from 'react-icons/fa';
 import styles from './VnpayResultPage.module.css';
@@ -52,7 +53,7 @@ export default function PaymentResultPage() {
           </div>
 
           <div className={styles.actions}>
-            <Link to="/" className={styles.btnHome}>
+            <Link to={ROUTES.HOME} className={styles.btnHome}>
               Tiếp tục mua sắm
             </Link>
             {success ? (

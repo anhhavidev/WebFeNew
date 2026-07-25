@@ -4,7 +4,9 @@ import { getCartItems, updateCartItem, removeFromCart } from "../../Service/cart
 import UpdateType from "../../constants/updateTypes";
 import useAuth from '../../Hooks/useAuth';
 import { useCart } from "../../constants/CartContext";
+import { ROUTES } from "../../constants/routePaths";
 import { useNavigate } from "react-router-dom";
+import CartSummary from './CartSummary';
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import './CustomerPages.css';
@@ -23,8 +25,27 @@ export default function Cart() {
       toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
       return;
     }
-    navigate("/checkout", { state: { selectedItems: selected } });
+    navigate(ROUTES.CHECKOUT, { state: { selectedItems: selected } });
   };
+
+  const mapCartResponse = (sellerGroups) =>
+    sellerGroups.flatMap(group =>
+      group.cartItems.map(item => ({
+        cartItemId: item.productId,
+        productName: item.productName,
+        productImage: item.linkImage,
+        originalPrice: item.originalPrice,
+        unitPrice: item.originalPrice * (1 - (item.discountPercent || 0) / 100),
+        discountPercent: item.discountPercent || 0,
+        quantity: item.soLuong,
+        localQuantity: item.soLuong,
+        availableStock: item.soLuongTonKho || 100,
+        isChecked: true,
+        sellerId: group.sellerId,
+        weight: item.weight || 0,
+        storeName: group.storeName,
+      }))
+    );
 
   const fetchCartItems = async () => {
     const token = await ensureTokenValid();
@@ -32,23 +53,7 @@ export default function Cart() {
     try {
       const res = await getCartItems(token);
       const sellerGroups = res.data?.sellerGroups || [];
-      const itemsWithChecked = sellerGroups.flatMap(group =>
-        group.cartItems.map(item => ({
-          cartItemId: item.productId,
-          productName: item.productName,
-          productImage: item.linkImage,
-          originalPrice: item.originalPrice,
-          unitPrice: item.originalPrice * (1 - (item.discountPercent || 0) / 100),
-          discountPercent: item.discountPercent || 0,
-          quantity: item.soLuong,
-          localQuantity: item.soLuong,
-          availableStock: item.soLuongTonKho || 100,
-          isChecked: true,
-          sellerId: group.sellerId,
-          weight: item.weight || 0,
-          storeName: group.storeName,
-        }))
-      );
+      const itemsWithChecked = mapCartResponse(sellerGroups);
       setCartItems(itemsWithChecked);
       setSelectAll(true);
       const totalQuantity = itemsWithChecked.reduce((sum, item) => sum + item.quantity, 0);
@@ -78,50 +83,8 @@ export default function Cart() {
     return () => clearTimeout(timer);
   }, [debouncedItem]);
 
-  useEffect(() => {
-    const fetchCI = async () => {
-      const token = await ensureTokenValid();
-      if (!token) { window.location.href = "/login"; return; }
-      try {
-        const res = await getCartItems(token);
-        const sellerGroups = res.data?.sellerGroups || [];
-        const itemsWithChecked = sellerGroups.flatMap(group =>
-          group.cartItems.map(item => ({
-            cartItemId: item.productId,
-            productName: item.productName,
-            productImage: item.linkImage,
-            originalPrice: item.originalPrice,
-            unitPrice: item.originalPrice * (1 - (item.discountPercent || 0) / 100),
-            discountPercent: item.discountPercent || 0,
-            quantity: item.soLuong,
-            localQuantity: item.soLuong,
-            availableStock: item.soLuongTonKho || 100,
-            isChecked: true,
-            sellerId: group.sellerId,
-            weight: item.weight || 0,
-            storeName: group.storeName,
-          }))
-        );
-        setCartItems(itemsWithChecked);
-        setSelectAll(true);
-        const totalQuantity = itemsWithChecked.reduce((sum, item) => sum + item.quantity, 0);
-        setCartCount(totalQuantity);
-      } catch (err) {
-        const status = err?.response?.status;
-        if (status === 401 || status === 403) {
-          toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-          window.location.href = "/login";
-        } else {
-          toast.error("Đã xảy ra lỗi khi tải giỏ hàng.");
-        }
-      }
-    };
-    fetchCI();
-  }, []);
-
   const totalPrice = cartItems.filter(item => item.isChecked)
     .reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-
   const selectedCount = cartItems.filter(item => item.isChecked).length;
 
   const handleCheck = (itemId) => {
@@ -176,10 +139,14 @@ export default function Cart() {
         cancelButtonText: 'Hủy'
       });
       if (confirm.isConfirmed) {
-        const token = await ensureTokenValid();
-        if (token) await removeFromCart(itemId, token);
-        await fetchCartItems();
-        toast.success("Đã xoá khỏi giỏ hàng!");
+        try {
+          const token = await ensureTokenValid();
+          if (token) await removeFromCart(itemId, token);
+          await fetchCartItems();
+          toast.success("Đã xoá khỏi giỏ hàng!");
+        } catch (err) {
+          toast.error("Xóa thất bại: " + err.message);
+        }
       }
       return;
     }
@@ -187,7 +154,9 @@ export default function Cart() {
       toast.error(`Chỉ còn ${item.availableStock} sản phẩm`);
       return;
     }
-    const newQuantity = type === UpdateType.SET ? quantity : type === UpdateType.INCREASE ? item.quantity + 1 : item.quantity - 1;
+    const newQuantity = type === UpdateType.SET ? quantity
+      : type === UpdateType.INCREASE ? item.quantity + 1
+      : item.quantity - 1;
     setCartItems(cartItems.map(i =>
       i.cartItemId === itemId ? { ...i, quantity: newQuantity, localQuantity: newQuantity } : i
     ));
@@ -213,7 +182,6 @@ export default function Cart() {
           </div>
         ) : (
           <div className="cp-cart-layout">
-            {/* Left - Cart Items */}
             <div>
               {sellerIds.map(sellerId => {
                 const items = cartItems.filter(i => i.sellerId === sellerId);
@@ -308,27 +276,7 @@ export default function Cart() {
               })}
             </div>
 
-            {/* Right - Order Summary */}
-            <div className="cp-order-summary">
-              <h2>Tóm tắt đơn hàng</h2>
-              <div className="cp-summary-row">
-                <span>Sản phẩm đã chọn</span>
-                <span>{selectedCount} sản phẩm</span>
-              </div>
-              <div className="cp-summary-row">
-                <span>Tạm tính</span>
-                <span>{totalPrice.toLocaleString()} đ</span>
-              </div>
-              <hr className="cp-summary-divider" />
-              <div className="cp-summary-total">
-                <span className="cp-summary-total-label">Tổng cộng</span>
-                <span className="cp-summary-total-value">{totalPrice.toLocaleString()}đ</span>
-              </div>
-              <button className="cp-btn-checkout" onClick={handleBuyNow}>
-                MUA NGAY ({selectedCount}) →
-              </button>
-              <a href="/" className="cp-btn-continue">Tiếp tục mua sắm</a>
-            </div>
+            <CartSummary selectedCount={selectedCount} totalPrice={totalPrice} onBuyNow={handleBuyNow} />
           </div>
         )}
       </div>

@@ -1,7 +1,9 @@
+// Service Seller quản lý đơn hàng của shop
 import axios from 'axios';
 
 const API = "http://localhost:5230/api/Seller";
-//seller
+
+// Lấy danh sách đơn hàng của seller (phân trang + bộ lọc)
 export async function GetAllOrderSeller(pageNumber, pageSize, token, filters = {}) {
   try {
     const respone = await axios.get(`${API}/Order-Seller`, {
@@ -23,6 +25,7 @@ export async function GetAllOrderSeller(pageNumber, pageSize, token, filters = {
     throw error;
   }
 }
+// Cập nhật trạng thái đơn hàng (xác nhận, đóng gói, giao hàng...)
 export async function UpdateOrderStatus(orderId, Status , token) {
   console.log(JSON.stringify({ Status }))
   const res = await fetch(`http://localhost:5230/api/Order/update-status/${orderId}`, {
@@ -41,6 +44,7 @@ export async function UpdateOrderStatus(orderId, Status , token) {
   return await res.json();
 }
 
+// Lấy chi tiết đơn hàng cho seller
 export async function getOrderDetaiSeller(orderId,token){
   const res = await fetch(`${API}/Order-Seller/${orderId}`, {
         method: "GET",  // GET thay vì PUT
@@ -51,7 +55,7 @@ export async function getOrderDetaiSeller(orderId,token){
     if (!res.ok) throw new Error("Lấy chi tiết đơn hàng thất bại");
     return await res.json();
 }
-// 🔹 🆕 Lấy dashboard thống kê của seller
+// Lấy dữ liệu thống kê dashboard của seller
 export async function GetSellerDashboard(filter, from, to, token) {
   try {
     const response = await axios.get(`${API}/dashboard`, {

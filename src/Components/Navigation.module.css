@@ -1,3 +1,6 @@
+/* ====== Navigation Styles ====== */
+
+/* Thanh navbar chính */
 .navbar {
   width: 100%;
   background-color: #fff;
@@ -6,6 +9,7 @@
   padding: 10px 0;
 }
 
+/* Danh sách nav - flexbox căn giữa */
 .navList {
   display: flex;
   justify-content: center;
@@ -17,18 +21,21 @@
   flex-wrap: wrap; /* nếu dài quá thì xuống dòng */
 }
 
+/* Mỗi mục trong nav */
 .navItem {
   text-transform: uppercase;
   font-weight: bold;
   font-size: 14px;
 }
 
+/* Link trong nav */
 .navLink {
   text-decoration: none;
   color: #222;
   transition: color 0.3s ease;
 }
 
+/* Hiệu ứng hover cho link */
 .navLink:hover {
   color: #ff6600; /* màu khi hover (cam nhạt) */
 }
@@ -39,6 +46,7 @@
   display: inline-block;
 }
 
+/* Class active - mục đang được chọn */
 .active {
   font-weight: bold;
   color: #fff;

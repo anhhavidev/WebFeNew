@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { ROUTES } from "../constants/routePaths";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import '../Admin/AdminDashboard.css';
@@ -85,9 +86,9 @@ export default function Dashboard() {
                 <FiChevronDown style={{ color: '#6b7280', fontSize: '0.8rem' }} />
               </button>
               <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                <li><Link className="dropdown-item py-2" to="/admin/dashboard/profile">👤 Thông tin cá nhân</Link></li>
+                <li><Link className="dropdown-item py-2" to={ROUTES.ADMIN_DASHBOARD_PROFILE}>👤 Thông tin cá nhân</Link></li>
                 <li><hr className="dropdown-divider" /></li>
-                <li><Link className="dropdown-item py-2 text-danger fw-medium" to="/login" onClick={() => logout()}>🚪 Đăng xuất</Link></li>
+                <li><Link className="dropdown-item py-2 text-danger fw-medium" to={ROUTES.LOGIN} onClick={() => logout()}>🚪 Đăng xuất</Link></li>
               </ul>
             </div>
           </div>

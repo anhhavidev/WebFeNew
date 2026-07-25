@@ -1,14 +1,18 @@
+// Utility quản lý giỏ hàng local (lưu tạm trước khi đăng nhập)
 const CART_KEY = 'local_cart';
 
+// Lấy giỏ hàng từ localStorage
 export function getLocalCart() {
   const cart = localStorage.getItem(CART_KEY);
   return cart ? JSON.parse(cart) : [];
 }
 
+// Lưu giỏ hàng vào localStorage
 export function saveLocalCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
+// Thêm sản phẩm vào giỏ hàng local (nếu đã có thì tăng số lượng)
 export function addToLocalCart(productId, quantity = 1, notifyCallback = null) {
   const cart = getLocalCart();
   const existing = cart.find(item => item.productId === productId);
@@ -30,6 +34,7 @@ export function addToLocalCart(productId, quantity = 1, notifyCallback = null) {
   return cart;
 }
 
+// Xóa toàn bộ giỏ hàng local
 export function clearLocalCart() {
   localStorage.removeItem(CART_KEY);
 }

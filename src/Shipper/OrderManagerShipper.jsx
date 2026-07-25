@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { GetOrdersForShipper, StartShipping, UpdateDeliveryStatus } from "../Service/Shipper/OrderShipperApi";
 import useAuth from "../Hooks/useAuth";
 import { FiPackage, FiTruck, FiCheck, FiX, FiMapPin, FiPhone, FiUser, FiInfo, FiSearch } from "react-icons/fi";
+import Pagination from "../Components/Pagination";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -266,28 +267,7 @@ export default function OrderManagerShipper() {
           )}
         </tbody>
       </table>
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <nav>
-          <ul className="pagination admin-pagination justify-content-center mt-4 mb-4">
-            <li className={`page-item ${pageNumber === 1 ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => setPageNumber(pageNumber - 1)}>
-                Trước
-              </button>
-            </li>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-              <li key={num} className={`page-item ${pageNumber === num ? "active" : ""}`}>
-                <button className="page-link" onClick={() => setPageNumber(num)}>{num}</button>
-              </li>
-            ))}
-            <li className={`page-item ${pageNumber === totalPages ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => setPageNumber(pageNumber + 1)}>
-                Sau
-              </button>
-            </li>
-          </ul>
-        </nav>
-      )}
+      <Pagination currentPage={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
 
 
     </div>

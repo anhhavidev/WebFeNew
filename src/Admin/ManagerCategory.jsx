@@ -36,7 +36,7 @@ const ManagerCategory = () => {
     setLoading(true);
     try {
       const data = await getCategories();
-      setCategories(data);
+      setCategories(data.data || data || []);
     } catch (error) {
       console.error("Lỗi tải danh mục:", error);
     } finally {

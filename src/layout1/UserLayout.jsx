@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faBell, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 import logo from "../Assets/img/pngtree-salon-logo-png-image_4004444-removebg-preview.png";
-import Navitation from '../Components/Navitation';
+import Navigation from '../Components/Navigation';
 import Footer from './Footer';
 import AiChatbot from '../Components/Chatbot/AiChatbot';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../Hooks/useAuth';
 import { useCart } from "../constants/CartContext";
+import { ROUTES } from "../constants/routePaths";
 import { getCartItems } from "../Service/cartApi";
 import '../Pages/Common/CustomerPages.css';
 
@@ -67,7 +68,7 @@ export default function UserLayout({ children }) {
     const params = new URLSearchParams({
       page: 1, pageSize: 12, keyword: searchKeyword, category, minprice, maxprice,
     });
-    navigate("/?" + params.toString());
+    navigate(ROUTES.HOME + "?" + params.toString());
   };
 
   return (
@@ -93,17 +94,17 @@ export default function UserLayout({ children }) {
                   {showDropdown && (
                     <ul className="cp-dropdown-menu">
                       <li>
-                        <button className="cp-dropdown-item" onClick={() => { navigate("/getinfor"); setShowDropdown(false); }}>
+                        <button className="cp-dropdown-item" onClick={() => { navigate(ROUTES.GETINFOR); setShowDropdown(false); }}>
                           👤 Thông tin tài khoản
                         </button>
                       </li>
                       <li>
-                        <button className="cp-dropdown-item" onClick={() => navigate("/orders")}>
+                        <button className="cp-dropdown-item" onClick={() => navigate(ROUTES.ORDERS)}>
                           🧾 Đơn hàng của tôi
                         </button>
                       </li>
                       <li>
-                        <button className="cp-dropdown-item" onClick={() => { logout(); setShowDropdown(false); setCartCount(0); navigate("/"); }}>
+                        <button className="cp-dropdown-item" onClick={() => { logout(); setShowDropdown(false); setCartCount(0); navigate(ROUTES.HOME); }}>
                           🔓 Đăng xuất
                         </button>
                       </li>
@@ -150,7 +151,7 @@ export default function UserLayout({ children }) {
           </div>
         </div>
 
-        <Navitation />
+        <Navigation />
       </header>
 
       {/* Main Content */}

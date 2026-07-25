@@ -29,7 +29,7 @@ const ShipperTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function ShipperDashboardChar() {
+export default function ShipperDashboardChart() {
   const { ensureTokenValid } = useAuth();
   const [from, setFrom]       = useState(dayjs().subtract(7, "day").format("YYYY-MM-DD"));
   const [to, setTo]           = useState(dayjs().format("YYYY-MM-DD"));

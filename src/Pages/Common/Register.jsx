@@ -3,6 +3,7 @@ import styles from "./Register.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FiUser, FiMail, FiLock, FiShoppingBag, FiArrowRight } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routePaths";
 import useAuth from "../../Hooks/useAuth";
 import Swal from "sweetalert2";
 
@@ -46,7 +47,7 @@ const Register = () => {
         timer: 5000,
         timerProgressBar: true,
       }).then((result) => {
-        navigate("/login");
+        navigate(ROUTES.LOGIN);
       });
     } else {
       setError(result.message || "Đăng ký thất bại");
@@ -141,7 +142,7 @@ const Register = () => {
         {/* Footer links */}
         <div className={styles.textCenter}>
           <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.875rem' }}>Đã có tài khoản? </span>
-          <Link to="/login" className={styles.link}>
+          <Link to={ROUTES.LOGIN} className={styles.link}>
             Đăng nhập ngay
           </Link>
         </div>

@@ -1,8 +1,7 @@
-// src/Service/Admin/UserAdminApi.js
+// Service Admin quản lý người dùng (CRUD + phân quyền)
+const BASE_URL = "http://localhost:5230/api/Admin";
 
-const BASE_URL = "http://localhost:5230/api/Admin"; // sửa theo URL backend của bạn
-
-// ✅ Lấy danh sách user (có phân trang)
+// Lấy danh sách người dùng (có phân trang)
 export const getAllUsers = async (token, pageIndex = 1, pageSize = 100) => {
   const response = await fetch(`${BASE_URL}/get-all?pageIndex=${pageIndex}&pageSize=${pageSize}`, {
     headers: {
@@ -13,7 +12,7 @@ export const getAllUsers = async (token, pageIndex = 1, pageSize = 100) => {
   return response.json();
 };
 
-// ✅ Lấy danh sách roles
+// Lấy danh sách roles (vai trò)
 export const getRoles = async (token) => {
   const response = await fetch(`${BASE_URL}/roles`, {
     headers: {
@@ -24,7 +23,7 @@ export const getRoles = async (token) => {
   return response.json();
 };
 
-// ✅ Tạo user mới
+// Tạo người dùng mới
 export const createUser = async (userData, token) => {
   const response = await fetch(`${BASE_URL}/create-user`, {
     method: "POST",
@@ -38,7 +37,7 @@ export const createUser = async (userData, token) => {
   return response.json();
 };
 
-// ✅ Cập nhật user
+// Cập nhật thông tin người dùng
 export const updateUser = async (id, userData, token) => {
   const payload = { ...userData, id: id };
   const response = await fetch(`${BASE_URL}/update-user`, {
@@ -53,7 +52,7 @@ export const updateUser = async (id, userData, token) => {
   return response.json();
 };
 
-// ✅ Xóa user
+// Xóa người dùng
 export const deleteUser = async (userId, token) => {
   const response = await fetch(`${BASE_URL}/delete-user/${userId}`, {
     method: "DELETE",
@@ -65,7 +64,7 @@ export const deleteUser = async (userId, token) => {
   return response.json();
 };
 
-// ✅ Gán role cho user
+// Gán vai trò (role) cho người dùng
 export const assignRole = async (userId, roleName, token) => {
   const response = await fetch(`${BASE_URL}/assign-role`, {
     method: "POST",
@@ -79,7 +78,7 @@ export const assignRole = async (userId, roleName, token) => {
   return response.json();
 };
 
-// ✅ Lấy user theo Id
+// Lấy thông tin người dùng theo ID
 export const getUserById = async (userId, token) => {
   const response = await fetch(`${BASE_URL}/get-user/${userId}`, {
     headers: {

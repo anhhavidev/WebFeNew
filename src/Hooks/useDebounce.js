@@ -1,4 +1,4 @@
-// hooks/useDebounce.js
+// Hook debounce - trì hoãn gọi callback sau khoảng thời gian delay
 import { useEffect } from "react";
 
 export default function useDebounce(callback, delay, deps) {

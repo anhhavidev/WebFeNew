@@ -6,6 +6,7 @@ import useAuth from "../Hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import "../Admin/AdminDashboard.css";
 import { FiUser, FiMail, FiPhone, FiPackage, FiCreditCard, FiTruck, FiMapPin, FiShoppingCart, FiEye, FiCheck, FiSearch } from "react-icons/fi";
+import Pagination from "../Components/Pagination";
 import toast from "react-hot-toast";
 
 export default function OrderManagerSeller() {
@@ -437,28 +438,7 @@ export default function OrderManagerSeller() {
         </div>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <nav>
-          <ul className="pagination admin-pagination justify-content-center mt-4 mb-4">
-            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                Trước
-              </button>
-            </li>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-              <li key={num} className={`page-item ${currentPage === num ? "active" : ""}`}>
-                <button className="page-link" onClick={() => handlePageChange(num)}>{num}</button>
-              </li>
-            ))}
-            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                Sau
-              </button>
-            </li>
-          </ul>
-        </nav>
-      )}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
 }

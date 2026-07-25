@@ -1,11 +1,12 @@
-import axios from "axios";
+// Service Admin quản lý danh mục sản phẩm (CRUD)
+import axiosClient from "../axiosClient";
 
-const API = "http://localhost:5230/api/Category";
+const API = "/Category";
 
-// 🔹 Lấy tất cả Category (không cần token)
+// Lấy tất cả danh mục (không yêu cầu token)
 export async function GetAllCategory() {
   try {
-    const response = await axios.get(`${API}/all`);
+    const response = await axiosClient.get(`${API}/all`);
     return response.data; // { isSuccess, message, data }
   } catch (error) {
     console.error("Lỗi khi lấy danh sách category:", error);
@@ -13,10 +14,10 @@ export async function GetAllCategory() {
   }
 }
 
-// 🔹 Thêm Category (cần token)
+// Thêm danh mục mới (yêu cầu token admin)
 export async function AddCategory(category, token) {
   try {
-    const response = await axios.post(`${API}/Add-Category`, category, {
+    const response = await axiosClient.post(`${API}`, category, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -26,10 +27,10 @@ export async function AddCategory(category, token) {
   }
 }
 
-// 🔹 Cập nhật Category (cần token)
+// Cập nhật thông tin danh mục (yêu cầu token admin)
 export async function UpdateCategory(category, token) {
   try {
-    const response = await axios.put(`${API}/Update`, category, {
+    const response = await axiosClient.put(`${API}/${category.id}`, category, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -39,10 +40,10 @@ export async function UpdateCategory(category, token) {
   }
 }
 
-// 🔹 Xóa Category (cần token)
+// Xóa danh mục (yêu cầu token admin)
 export async function DeleteCategory(id, token) {
   try {
-    const response = await axios.delete(`${API}/Delete/${id}`, {
+    const response = await axiosClient.delete(`${API}/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

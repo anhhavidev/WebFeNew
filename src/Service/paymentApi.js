@@ -1,38 +1,19 @@
-export async function createVnpayUrl(orderId, token) {
-  const res = await fetch(`http://localhost:5230/api/payment/create-url`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      orderId: orderId,
-      orderType: "other" // đúng theo BE yêu cầu
-    })
-  });
+// Service xử lý thanh toán (VNPay, COD...)
+import axiosClient from "./axiosClient";
 
-  const data = await res.json();
-  return data.paymentUrl;
-}
-// Gọi API tạo URL thanh toán
-export async function createPaymentUrl(orderId, method, token) {
-  const res = await fetch(`http://localhost:5230/api/Paymentest/create?method=${method}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      orderId: orderId,
-      orderType: "other", // Hoặc bạn có thể lấy từ giao diện
-    }),
-  });
+const ENDPOINT = "/Paymentest";
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error("Tạo URL thất bại: " + errorText);
-  }
+// Tạo yêu cầu thanh toán mới
+export const createPayment = async (data) => {
+  return await axiosClient.post(`${ENDPOINT}/create`, data);
+};
 
-  const data = await res.json();
-  return data.url;
-}
+// Xử lý kết quả trả về từ VNPay sau khi thanh toán
+export const processVnpayReturn = async (params) => {
+  return await axiosClient.get(`${ENDPOINT}/callback`, { params });
+};
+
+export const createPaymentUrl = async (orderId, method, token) => {
+  const response = await axiosClient.post(`${ENDPOINT}/create`, { orderId, method });
+  return response;
+};

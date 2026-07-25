@@ -4,6 +4,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FiMail, FiLock, FiShoppingBag, FiArrowRight } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routePaths";
 import useAuth from "../../Hooks/useAuth";
 import { syncCartToServer, getCartItems } from "../../Service/cartApi";
 import { getLocalCart, clearLocalCart } from "../../utils/cartStorage";
@@ -52,14 +53,14 @@ const Login = () => {
       // navigate(result.role === "Admin" ? "/admin/dashboard" : "/");
       // Điều hướng
       if (result.role === "Admin") {
-        navigate("/admin/dashboard");
+        navigate(ROUTES.ADMIN_DASHBOARD);
       } else if (result.role === "Shipper") {
-        navigate("/shipper/dashboard");
+        navigate(ROUTES.SHIPPER_DASHBOARD);
       }
         else if (result.role === "Seller") {
-        navigate("/seller/dashboard");
+        navigate(ROUTES.SELLER_DASHBOARD);
       } else {
-        navigate("/"); // Customer hoặc role khác
+        navigate(ROUTES.HOME); // Customer hoặc role khác
       }
 
     } else {
@@ -82,8 +83,8 @@ const Login = () => {
 
         if (res.ok) {
           // Lưu token như login thường
-          localStorage.setItem("token", data.accessToken);
-          localStorage.setItem("refreshToken", data.refreshToken);
+          localStorage.setItem("token", data.data?.accessToken || data.accessToken);
+          localStorage.setItem("refreshToken", data.data?.refreshToken || data.refreshToken);
 
           await getProfile(data.accessToken); // gọi lại profile
 
@@ -105,11 +106,11 @@ const Login = () => {
 
           // navigate(role === "Admin" ? "/admin/dashboard" : "/");
           if (role === "Admin") {
-            navigate("/admin/dashboard");
+            navigate(ROUTES.ADMIN_DASHBOARD);
           } else if (role === "Shipper") {
-            navigate("/shipper/dashboard/orders");
+            navigate(ROUTES.SHIPPER_DASHBOARD_ORDERS);
           } else {
-            navigate("/");
+            navigate(ROUTES.HOME);
           }
 
         } else {
@@ -169,7 +170,7 @@ const Login = () => {
             </span>
           </div>
           <div className={styles.textCenter} style={{ marginBottom: '20px', marginTop: '-6px' }}>
-            <Link to="/forgot-password" className={styles.link} style={{ fontSize: '0.82rem' }}>
+            <Link to={ROUTES.FORGOT_PASSWORD} className={styles.link} style={{ fontSize: '0.82rem' }}>
               Quên mật khẩu?
             </Link>
           </div>
@@ -184,7 +185,7 @@ const Login = () => {
         </div>
         <div className={styles.textCenter} style={{ marginTop: '20px' }}>
           <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.875rem' }}>Chưa có tài khoản? </span>
-          <Link to="/Register" className={styles.link}>
+          <Link to={ROUTES.REGISTER} className={styles.link}>
             Đăng ký ngay
           </Link>
         </div>

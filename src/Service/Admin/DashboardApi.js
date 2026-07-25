@@ -1,3 +1,4 @@
+// Service Admin lấy dữ liệu thống kê dashboard (top sản phẩm, doanh thu, tổng quan)
 import useAuth from "../../Hooks/useAuth";
 
 const API_BASE = "http://localhost:5230/api/DashBoard";

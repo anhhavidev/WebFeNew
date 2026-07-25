@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { ROUTES } from "../constants/routePaths";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "./AdminDashboard.css"; // Reuse shared dashboard styles
@@ -34,12 +35,12 @@ export default function ShipperDashboard() {
         <nav className="sidebar-nav" style={{ padding: "24px 16px" }}>
             <div className="nav-section-title" style={{ fontSize: "0.75rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px", paddingLeft: "12px" }}>Nhiệm vụ</div>
             
-            <Link to="/shipper/dashboard" className={`nav-link-item ${location.pathname === "/shipper/dashboard" ? "active" : ""}`} style={{ display: "flex", alignItems: "center", padding: "10px 12px", borderRadius: "8px", color: location.pathname === "/shipper/dashboard" ? "#2563eb" : "#4b5563", background: location.pathname === "/shipper/dashboard" ? "#eff6ff" : "transparent", textDecoration: "none", marginBottom: "4px", fontWeight: 500 }}>
+            <Link to={ROUTES.SHIPPER_DASHBOARD} className={`nav-link-item ${location.pathname === ROUTES.SHIPPER_DASHBOARD ? "active" : "inactive"}`} style={{}}>
                 <FiPieChart style={{ marginRight: "12px", fontSize: "18px" }} />
                 Tổng quan
             </Link>
             
-            <Link to="/shipper/dashboard/orders" className={`nav-link-item ${location.pathname.includes("/shipper/dashboard/orders") ? "active" : ""}`} style={{ display: "flex", alignItems: "center", padding: "10px 12px", borderRadius: "8px", color: location.pathname.includes("/shipper/dashboard/orders") ? "#2563eb" : "#4b5563", background: location.pathname.includes("/shipper/dashboard/orders") ? "#eff6ff" : "transparent", textDecoration: "none", marginBottom: "4px", fontWeight: 500 }}>
+            <Link to={ROUTES.SHIPPER_DASHBOARD_ORDERS} className={`nav-link-item ${location.pathname.includes(ROUTES.SHIPPER_DASHBOARD_ORDERS) ? "active" : "inactive"}`} style={{}}>
                 <FiTruck style={{ marginRight: "12px", fontSize: "18px" }} />
                 Đơn hàng giao
             </Link>
@@ -77,9 +78,9 @@ export default function ShipperDashboard() {
                 <FiChevronDown color="#6b7280" />
               </button>
               <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2 rounded-3" aria-labelledby="shipperDropdown" style={{ minWidth: "200px" }}>
-                <li><Link className="dropdown-item py-2 d-flex align-items-center text-secondary" to="/shipper/dashboard/profile"><FiUser className="me-2" /> Hồ sơ cá nhân</Link></li>
+                <li><Link className="dropdown-item py-2 d-flex align-items-center text-secondary" to={ROUTES.SHIPPER_DASHBOARD_PROFILE}><FiUser className="me-2" /> Hồ sơ cá nhân</Link></li>
                 <li><hr className="dropdown-divider my-1" /></li>
-                <li><Link className="dropdown-item py-2 d-flex align-items-center text-danger" to="/login" onClick={() => logout()}><FiLogOut className="me-2" /> Đăng xuất</Link></li>
+                <li><Link className="dropdown-item py-2 d-flex align-items-center text-danger" to={ROUTES.LOGIN} onClick={() => logout()}><FiLogOut className="me-2" /> Đăng xuất</Link></li>
               </ul>
             </div>
           </div>

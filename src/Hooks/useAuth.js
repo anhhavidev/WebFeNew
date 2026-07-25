@@ -1,15 +1,19 @@
+// Hook quản lý xác thực người dùng (login, register, logout, refresh token)
 import { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import axiosClient from "../Service/axiosClient";
 
-// Biến toàn cục chống gọi trùng
+// Biến toàn cục chống gọi refresh token trùng lặp
 let isRefreshing = false;
 let refreshSubscribers = [];
 
+// Thông báo token mới cho tất cả request đang chờ
 function onRefreshed(newToken) {
   refreshSubscribers.forEach((callback) => callback(newToken));
   refreshSubscribers = [];
 }
 
+// Đăng ký callback chờ token mới
 function addSubscriber(callback) {
   refreshSubscribers.push(callback);
 }
@@ -17,6 +21,7 @@ function addSubscriber(callback) {
 export default function useAuth() {
   const [user, setUser] = useState(null);
 
+  // Đăng xuất: xóa token và thông tin người dùng khỏi localStorage
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
@@ -25,21 +30,10 @@ export default function useAuth() {
     console.warn("🚪 Đã logout vì token hết hạn hoặc lỗi.");
   };
 
+  // Lấy thông tin hồ sơ người dùng từ API
   const getProfile = async (token) => {
     try {
-      const response = await fetch("http://localhost:5230/api/Account/profile", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        console.error("❌ Lấy thông tin người dùng thất bại.");
-        return;
-      }
-
-      const result = await response.json();
+      const result = await axiosClient.get("/Account/profile");
 
       if (result.isSuccess && result.data) {
         const decoded = jwtDecode(token);
@@ -77,27 +71,15 @@ export default function useAuth() {
     checkToken();
   }, []);
 
+  // Đăng nhập với email và mật khẩu
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:5230/api/Account/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, method: "normal" }), // thêm đây 
-      });
+      const data = await axiosClient.post("/Account/signin", { email, password, method: "normal" });
 
-      if (!response.ok) {
-      const errorData = await response.json(); // lấy thông báo lỗi trả về từ backend
-      throw new Error(errorData.message || "Đăng nhập thất bại");
-    }
-
-      const data = await response.json();
-      
-      // ✅ Kiểm tra backend trả về success hay không (ResponeDTO.IsSuccess)
       if (!data.isSuccess) {
         throw new Error(data.message || "Tài khoản hoặc mật khẩu không đúng!");
       }
 
-      // ✅ Đảm bảo data.data không null mới truy cập accessToken/refreshToken
       if (!data.data) {
          throw new Error("Không nhận được dữ liệu từ hệ thống. Thử lại sau!");
       }
@@ -116,18 +98,10 @@ export default function useAuth() {
     }
   };
 
+  // Đăng ký tài khoản mới
   const register = async ({ email, password, confirmPassWord, fullName }) => {
   try {
-    const response = await fetch("http://localhost:5230/api/Account/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, confirmPassWord, fullName }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Đăng ký thất bại");
-    }
+    await axiosClient.post("/Account/signup", { email, password, confirmPassWord, fullName });
 
     return { success: true };
   } catch (error) {
@@ -135,6 +109,7 @@ export default function useAuth() {
   }
 };
 
+  // Làm mới token JWT khi sắp hết hạn
   const refreshAccessToken = async () => {
     if (isRefreshing) {
       // Nếu đang refresh, chờ token mới rồi trả lại
@@ -149,21 +124,14 @@ export default function useAuth() {
     const refreshToken = localStorage.getItem("refreshToken");
 
     try {
-      const res = await fetch("http://localhost:5230/api/Account/refresh-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: oldToken, refreshToken }),
-      });
+      const data = await axiosClient.post("/Account/refresh-token", { token: oldToken, refreshToken });
+      const tokens = data.data || data;
+      localStorage.setItem("token", tokens.accessToken);
+      localStorage.setItem("refreshToken", tokens.refreshToken);
 
-      if (!res.ok) throw new Error("Refresh thất bại");
+      onRefreshed(tokens.accessToken);
 
-      const data = await res.json();
-      localStorage.setItem("token", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-
-      onRefreshed(data.accessToken); // Thông báo token mới cho tất cả request đang chờ
-
-      return data.accessToken;
+      return tokens.accessToken;
     } catch (err) {
       console.error("❌ Không thể refresh token:", err);
       logout();
@@ -173,6 +141,7 @@ export default function useAuth() {
     }
   };
 
+  // Kiểm tra token còn hạn không, tự động refresh nếu cần
   const ensureTokenValid = async () => {
     const token = localStorage.getItem("token");
     if (!token) return null;

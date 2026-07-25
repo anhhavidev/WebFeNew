@@ -991,3 +991,29 @@
   border: 4px solid #ffffff;
   outline: 2px solid #e0e7ff;
 }
+
+/* Utility classes for dashboard sidebar nav (replacing inline styles) */
+.nav-link-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  margin-bottom: 4px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-link-item:hover {
+  background: #f3f4f6;
+}
+
+.nav-link-item.active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.nav-link-item.inactive {
+  background: transparent;
+  color: #4b5563;
+}

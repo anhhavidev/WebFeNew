@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
-  getPaginatedProducSeller,
+  getPaginatedProductSeller,
   deleteProduct,
-  getCategories,
   addProduct, updateProduct, getProductById
 } from "../Service/ProductApi";
+import { getCategories } from "../Service/categoryApi";
 import "../Admin/ProductManagement.css";
-import ProductForm from "../Admin/Helpper/ProductForm";
+import ProductForm from "../Admin/Helper/ProductForm";
 import { FiEye, FiEdit, FiTrash2, FiSearch, FiFilter, FiPlus } from "react-icons/fi";
+import Pagination from "../Components/Pagination";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -118,9 +119,9 @@ const ProductManagerSeller = () => {
         status: status ? parseInt(status) : null
       };
 
-      const productData = await getPaginatedProducSeller(filter);
-      setProducts(productData.items || []);
-      setTotalPages(productData.totalPages || 1);
+      const productData = await getPaginatedProductSeller(filter);
+      setProducts(productData.data?.items || productData.items || []);
+      setTotalPages(productData.data?.totalPages || productData.totalPages || 1);
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
       toast.error("Không thể tải sản phẩm");
@@ -160,8 +161,8 @@ const ProductManagerSeller = () => {
   const handleView = async (id) => {
     const loadingToast = toast.loading("Đang lấy thông tin...");
     try {
-      const data = await getProductById(id);
-      setSelectedProduct(data);
+      const res = await getProductById(id);
+      setSelectedProduct(res.data || res);
       setShowViewModal(true);
       toast.dismiss(loadingToast);
     } catch (err) {
@@ -415,44 +416,7 @@ const ProductManagerSeller = () => {
   </div>
 )}
 
-      {/* Pagination */}
-      <nav>
-        <ul className="pagination justify-content-center">
-          <li className={`page-item ${pageNumber === 1 ? "disabled" : ""}`}>
-            <button
-              className="page-link"
-              onClick={() => setPageIndex((p) => Math.max(1, p - 1))}
-            >
-              Trước
-            </button>
-          </li>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-            <li
-              key={num}
-              className={`page-item ${pageNumber === num ? "active" : ""}`}
-            >
-              <button className="page-link" onClick={() => setPageIndex(num)}>
-                {num}
-              </button>
-            </li>
-          ))}
-
-          <li
-            className={`page-item ${pageNumber === totalPages ? "disabled" : ""
-              }`}
-          >
-            <button
-              className="page-link"
-              onClick={() =>
-                setPageIndex((p) => Math.min(totalPages, p + 1))
-              }
-            >
-              Sau
-            </button>
-          </li>
-        </ul>
-      </nav>
+      <Pagination currentPage={pageNumber} totalPages={totalPages} onPageChange={setPageIndex} />
       {showForm && (
         <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-lg modal-dialog-scrollable">

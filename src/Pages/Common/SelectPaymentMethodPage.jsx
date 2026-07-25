@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routePaths";
 import { createPaymentUrl } from "../../Service/paymentApi";
 import UserLayout from "../../layout1/UserLayout";
 
@@ -12,7 +13,8 @@ export default function PaymentMethodPage() {
   const handlePayment = async () => {
     try {
       const token = localStorage.getItem("token");
-      const url = await createPaymentUrl(orderId, method, token);
+      const res = await createPaymentUrl(orderId, method, token);
+      const url = res?.data?.url || res?.url || res;
       window.location.href = url;
     } catch (err) {
       setError(err.message || "Có lỗi xảy ra khi thanh toán.");
@@ -59,7 +61,7 @@ export default function PaymentMethodPage() {
 
               <button
                 className="btn btn-outline-secondary w-100 mt-3"
-                onClick={() => navigate("/checkout")}
+                onClick={() => navigate(ROUTES.CHECKOUT)}
               >
                 ⬅ Quay lại
               </button>

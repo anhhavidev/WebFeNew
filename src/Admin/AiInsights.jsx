@@ -38,13 +38,14 @@ export default function AiInsights() {
             return;
         }
 
-        // ✅ Validate dữ liệu cơ bản
-        if (!json.topKeywords || !json.customerNeeds) {
+        const insights = json.data || json;
+
+        if (!insights.topKeywords || !insights.customerNeeds) {
             setError('Dữ liệu phân tích không đầy đủ. Vui lòng thử lại.');
             return;
         }
 
-        setData(json);
+        setData(insights);
         setAnalyzed(true);
     } catch (err) {
         setError(err.message || 'Không thể kết nối AI.');

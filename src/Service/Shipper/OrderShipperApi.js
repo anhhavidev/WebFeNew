@@ -1,11 +1,9 @@
+// Service Shipper quản lý đơn hàng vận chuyển
 import axios from "axios";
 
 const API = "http://localhost:5230/api/Shipper";
 
-/* --------------------------------------------
-1️⃣ Phân công shipper cho đơn hàng (Admin)
-POST /api/shipper/assign?orderId=1&shipperId=abc123
--------------------------------------------- */
+// Phân công shipper cho đơn hàng (Admin thực hiện)
 export async function AssignShipperToOrder(orderId, shipperId, token) {
   try {
     const res = await axios.post(`${API}/assign`, null, {
@@ -19,10 +17,7 @@ export async function AssignShipperToOrder(orderId, shipperId, token) {
   }
 }
 
-/* --------------------------------------------
-2️⃣ Lấy danh sách đơn của shipper
-GET /api/shipper/my-orders
--------------------------------------------- */
+// Lấy danh sách đơn hàng được gán cho shipper
 export async function GetOrdersForShipper(token, pageNumber = 1, pageSize = 10, filters = {}) {
   try {
     const res = await axios.get(`${API}/my-orders`, {
@@ -42,10 +37,7 @@ export async function GetOrdersForShipper(token, pageNumber = 1, pageSize = 10, 
 }
 
 
-/* --------------------------------------------
-3️⃣ Bắt đầu giao hàng
-POST /api/shipper/start-shipping/{orderId}
--------------------------------------------- */
+// Bắt đầu quá trình giao hàng
 export async function StartShipping(orderId, token) {
   try {
     const res = await axios.post(`${API}/start-shipping/${orderId}`, null, {
@@ -58,10 +50,7 @@ export async function StartShipping(orderId, token) {
   }
 }
 
-/* --------------------------------------------
-4️⃣ Cập nhật kết quả giao hàng
-POST /api/shipper/update-delivery-status
--------------------------------------------- */
+// Cập nhật kết quả giao hàng (thành công hoặc thất bại)
 export async function UpdateDeliveryStatus(orderId, success, failReason, token) {
   try {
     const res = await axios.post(
@@ -76,10 +65,7 @@ export async function UpdateDeliveryStatus(orderId, success, failReason, token) 
   }
 }
 
-/* --------------------------------------------
-5️⃣ Lấy dashboard cho shipper
-GET /api/shipper/dashboard?from=2025-10-01&to=2025-10-10
--------------------------------------------- */
+// Lấy dữ liệu thống kê dashboard cho shipper
 export async function GetShipperDashboard(from, to, token) {
   try {
     const res = await axios.get(`${API}/dashboard`, {
@@ -93,10 +79,7 @@ export async function GetShipperDashboard(from, to, token) {
   }
 }
 
-/* --------------------------------------------
-6️⃣ Lấy danh sách shipper khả dụng (Admin/Seller)
-GET /api/shipper/available
--------------------------------------------- */
+// Lấy danh sách shipper đang sẵn sàng nhận đơn
 export async function GetAvailableShippers(token) {
   try {
     const res = await axios.get(`${API}/available`, {

@@ -1,46 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './AiChatbot.css';
-import axios from 'axios';
+import axiosClient from '../../Service/axiosClient';
 import useAuth from '../../Hooks/useAuth';
+import { SendIcon, ImageIcon, MicIcon, BotAvatar, CloseIcon, MenuIcon, ChatIcon, PlusIcon, HistoryIcon, BotIconSmall } from './Icons';
 
-const SendIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="22" y1="2" x2="11" y2="13" />
-        <polygon points="22 2 15 22 11 13 2 9 22 2" />
-    </svg>
-);
-
-const ImageIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <polyline points="21 15 16 10 5 21"/>
-    </svg>
-);
-
-const MicIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-    <line x1="12" y1="19" x2="12" y2="23"/>
-    <line x1="8" y1="23" x2="16" y2="23"/>
-  </svg>
-);
-
-const BotAvatar = () => (
-    <div className="bot-avatar glass-effect">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="10" rx="2" />
-            <circle cx="12" cy="5" r="2" />
-            <path d="M12 7v4" />
-            <line x1="8" y1="16" x2="8" y2="16" strokeWidth="3" />
-            <line x1="16" y1="16" x2="16" y2="16" strokeWidth="3" />
-        </svg>
-    </div>
-);
-
+// Component chatbot AI tư vấn thời trang
 const AiChatbot = () => {
     const { user } = useAuth();
+    // State lưu Session ID - phục hồi từ localStorage nếu có
     const [sessionId, setSessionId] = useState(() => {
         const savedSession = localStorage.getItem('chatSessionId');
         if (savedSession) return savedSession;
@@ -48,9 +15,12 @@ const AiChatbot = () => {
         localStorage.setItem('chatSessionId', newSession);
         return newSession;
     });
+    // State lưu danh sách session chat
     const [sessions, setSessions] = useState([]);
+    // State sidebar và chat window
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    // State lưu tin nhắn và input
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -71,9 +41,10 @@ const AiChatbot = () => {
         }
     }, [user]);
     
-    // Khởi tạo Speech Recognition
+    // Khởi tạo Speech Recognition cho nhập giọng nói
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+    // Khởi tạo đối tượng SpeechRecognition với ngôn ngữ vi-VN
     useEffect(() => {
         if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
@@ -95,15 +66,12 @@ const AiChatbot = () => {
         }
     }, [SpeechRecognition]);
 
-    // Load History từ Backend
+    // Load lịch sử chat từ Backend khi sessionId thay đổi
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-                
-                const response = await axios.get(`http://localhost:5230/api/Chat/History/${sessionId}`, config);
-                if (response.data && response.data.length > 0) {
+                const response = await axiosClient.get(`/Chat/History/${sessionId}`);
+                if (response?.data?.length > 0) {
                     setMessages(response.data);
                 } else {
                     setMessages([{ text: 'Chào ban, tôi là tư vấn viên AI của WebClothes. Bạn cần tìm gì ạ?', sender: 'bot' }]);
@@ -117,26 +85,26 @@ const AiChatbot = () => {
         fetchHistory();
     }, [sessionId]);
 
-    // Load danh sách Session
+    // Load danh sách Session từ backend
     const fetchSessions = async () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const response = await axios.get('http://localhost:5230/api/Chat/Sessions', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setSessions(response.data);
+            const response = await axiosClient.get('/Chat/Sessions');
+            setSessions(response.data || response || []);
         } catch (error) {
             console.error('Error fetching sessions:', error);
         }
     };
 
+    // Load sessions khi mở chat window
     useEffect(() => {
         if (isOpen) {
             fetchSessions();
         }
     }, [isOpen]);
 
+    // Tạo mới một cuộc hội thoại
     const handleNewChat = () => {
         const newSession = Math.random().toString(36).substring(2, 11);
         setSessionId(newSession);
@@ -145,12 +113,14 @@ const AiChatbot = () => {
         setIsSidebarOpen(false);
     };
 
+    // Chuyển đổi qua lại giữa các session
     const handleSwitchSession = (sid) => {
         setSessionId(sid);
         localStorage.setItem('chatSessionId', sid);
         setIsSidebarOpen(false);
     };
 
+    // Bật/tắt chức năng thu âm giọng nói
     const toggleListen = () => {
         if (!SpeechRecognition) {
             alert('Trình duyệt của bạn không hỗ trợ chức năng thu âm giọng nói!');
@@ -164,10 +134,12 @@ const AiChatbot = () => {
         }
     };
 
+    // Bật/tắt chat window
     const toggleChat = () => {
         setIsOpen(!isOpen);
     };
 
+    // Gửi tin nhắn lên backend
     const handleSend = async () => {
         if (!input.trim() && !selectedImage) return;
 
@@ -186,16 +158,13 @@ const AiChatbot = () => {
         setIsLoading(true);
 
         try {
-            const token = localStorage.getItem('token');
-            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-
-            const response = await axios.post('http://localhost:5230/api/Chat/Send', {
+            const response = await axiosClient.post('/Chat/Send', {
                 SessionId: sessionId,
                 Message: userMessage,
                 ImageBase64: imageToSend?.base64 || null,
                 ImageMimeType: imageToSend?.mimeType || null
-            }, config);
-            const botReply = response.data.reply;
+            });
+            const botReply = response.data?.reply || response.reply;
             setMessages((prev) => [...prev, { text: botReply, sender: 'bot' }]);
         } catch (error) {
             console.error('Error sending message:', error);
@@ -208,12 +177,14 @@ const AiChatbot = () => {
         }
     };
 
+    // Auto-scroll xuống tin nhắn mới nhất
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages]);
 
+    // Xử lý khi người dùng chọn ảnh để gửi
     const handleImageSelect = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -235,6 +206,7 @@ const AiChatbot = () => {
         e.target.value = '';
     };
 
+    // Render nội dung tin nhắn (hỗ trợ ảnh và markdown cơ bản)
     const renderMessage = (text, imagePreview) => {
         return (
             <>
@@ -273,20 +245,20 @@ const AiChatbot = () => {
         <div className="ai-chatbot-container">
             {isOpen && (
                 <div className="ai-chatbot-window premium-shadow glow-effect">
-                    {/* Sidebar Backdrop */}
+                    {/* Lớp phủ khi mở sidebar */}
                     {isSidebarOpen && <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
-                    {/* Sidebar */}
+                    {/* Sidebar - Lịch sử hội thoại */}
                     <div className={`chatbot-sidebar ${isSidebarOpen ? 'open' : ''}`}>
                         <div className="sidebar-header">
                             <div className="sidebar-header-top">
                                 <h4>Lịch sử chat</h4>
-                                <button className="close-sidebar-btn" onClick={() => setIsSidebarOpen(false)}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                 <button className="close-sidebar-btn" onClick={() => setIsSidebarOpen(false)}>
+                                    <CloseIcon />
                                 </button>
                             </div>
                             <button className="new-chat-btn" onClick={handleNewChat}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <PlusIcon />
                                 Chat mới
                             </button>
                         </div>
@@ -298,7 +270,7 @@ const AiChatbot = () => {
                                     onClick={() => handleSwitchSession(s.sessionId)}
                                 >
                                     <div className="item-icon">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                        <HistoryIcon />
                                     </div>
                                     <span className="item-title">{s.title || "Cuộc trò chuyện mới"}</span>
                                 </div>
@@ -308,10 +280,11 @@ const AiChatbot = () => {
                         </div>
                     </div>
 
+                    {/* Header chat window */}
                     <div className="ai-chatbot-header header-gradient">
                         <div className="header-title">
                             <button className="menu-toggle-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                                <MenuIcon />
                             </button>
                             <BotAvatar /> 
                             <div className="header-text-container">
@@ -320,15 +293,17 @@ const AiChatbot = () => {
                             </div>
                         </div>
                         <button className="close-btn" onClick={toggleChat}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <CloseIcon />
                         </button>
                     </div>
+
+                    {/* Vùng hiển thị tin nhắn */}
                     <div className="ai-chatbot-messages smooth-scroll">
                         {messages.map((msg, index) => (
                             <div key={index} className={`ai-message-wrapper ${msg.sender}`}>
                                 {msg.sender === 'bot' && (
                                     <div className="chat-avatar bot-bubble-icon">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /></svg>
+                                        <BotIconSmall />
                                     </div>
                                 )}
                                 <div className={`ai-message ${msg.sender}`}>
@@ -341,7 +316,7 @@ const AiChatbot = () => {
                         {isLoading && (
                             <div className="ai-message-wrapper bot">
                                 <div className="chat-avatar bot-bubble-icon">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /></svg>
+                                    <BotIconSmall />
                                 </div>
                                 <div className="ai-message bot">
                                     <div className="ai-msg-content ai-typing-indicator">
@@ -352,8 +327,10 @@ const AiChatbot = () => {
                         )}
                         <div ref={messagesEndRef} />
                     </div>
+
+                    {/* Vùng nhập liệu */}
                     <div className="ai-chatbot-input">
-                        {/* Hidden file input */}
+                        {/* Input file ẩn để chọn ảnh */}
                         <input
                             type="file"
                             accept="image/*"
@@ -361,7 +338,7 @@ const AiChatbot = () => {
                             style={{ display: 'none' }}
                             onChange={handleImageSelect}
                         />
-                        {/* Image preview khi đã chọn ảnh */}
+                        {/* Preview ảnh sau khi chọn */}
                         {selectedImage && (
                             <div className="image-preview-container">
                                 <img src={selectedImage.previewUrl} alt="preview" className="image-preview-thumb" />
@@ -374,6 +351,7 @@ const AiChatbot = () => {
                                 </button>
                             </div>
                         )}
+                        {/* Nút thu âm giọng nói */}
                         <button 
                             className={`mic-btn ${isListening ? 'listening' : ''}`} 
                             onClick={toggleListen}
@@ -396,18 +374,16 @@ const AiChatbot = () => {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                         />
+                        {/* Nút gửi tin nhắn */}
                         <button className="send-btn" onClick={handleSend} disabled={isLoading || (!input.trim() && !selectedImage)}>
                             <SendIcon />
                         </button>
                     </div>
                 </div>
             )}
+            {/* Nút toggle mở/đóng chat */}
             <div className={`ai-chatbot-toggle ${isOpen ? 'active' : ''}`} onClick={toggleChat}>
-                 {isOpen ? 
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    :
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                 }
+                 {isOpen ? <CloseIcon /> : <ChatIcon />}
             </div>
         </div>
     );

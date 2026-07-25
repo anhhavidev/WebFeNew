@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routePaths";
 import toast from "react-hot-toast";
 
 export default function RetryPaymentPage() {
@@ -22,7 +23,8 @@ export default function RetryPaymentPage() {
           throw new Error("Không tìm thấy đơn hàng");
         }
 
-        const order = await orderRes.json();
+        const orderResBody = await orderRes.json();
+        const order = orderResBody.data || orderResBody;
 
         // 🌐 Gọi API tạo URL thanh toán VNPAY
         const res = await fetch(`http://localhost:5230/api/Paymentest/create?method=vnpay`, {
@@ -46,17 +48,18 @@ export default function RetryPaymentPage() {
 }
 
         const data = await res.json();
+        const paymentUrl = data?.data?.url || data?.url;
 
-        if (data?.url) {
-          window.location.href = data.url;
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
         } else {
           toast.error("Không tạo được URL thanh toán");
-          navigate("/orders");
+          navigate(ROUTES.ORDERS);
         }
       } catch (err) {
         console.error("❌ Lỗi khi tạo URL thanh toán:", err);
         toast.error("Có lỗi xảy ra khi tạo thanh toán");
-        navigate("/orders");
+        navigate(ROUTES.ORDERS);
       }
     }
 

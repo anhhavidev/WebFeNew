@@ -5,7 +5,7 @@ import ProductManagement from "../Admin/ProductManagement";
 import PrivateSeller from "./PrivateSeller"
 import ProductManagerSeller from "../Seller/ProductManagerSeller";
 import OrderManagerSeller from "../Seller/OrderManagerSeller";
-import SellerDashboardChar from "../Seller/SellerDashboardChar";
+import SellerDashboardChart from "../Seller/SellerDashboardChar";
 import UserProfile from "../Admin/UserProfile";
 
 const SellerRoutes = () => {
@@ -14,7 +14,7 @@ const SellerRoutes = () => {
             <Routes>
                 {/* Seller routes */}
                 <Route path="/seller/dashboard" element={<PrivateSeller><SellerDashboard/></PrivateSeller>}>
-                    <Route index element={<SellerDashboardChar/>} />
+                    <Route index element={<SellerDashboardChart/>} />
                     <Route path="products" element={<ProductManagerSeller />} />
                     <Route path="orders" element={<OrderManagerSeller />} />
                     <Route path="profile" element={<UserProfile />} />

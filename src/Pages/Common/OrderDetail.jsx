@@ -23,9 +23,9 @@ export default function OrderDetail() {
 
       try {
         if (!orderId) return;
-        const data = await getOrderDetail(orderId, token);
-        console.log("API trả về:", data);
-        setOrderDetail(data);
+        const res = await getOrderDetail(orderId, token);
+        console.log("API trả về:", res);
+        setOrderDetail(res.data || res);
       } catch (error) {
         console.error("Lỗi khi lấy chi tiết đơn hàng:", error);
       }

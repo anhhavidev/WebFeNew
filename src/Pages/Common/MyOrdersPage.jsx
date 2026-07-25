@@ -5,6 +5,7 @@ import UserLayout from "../../layout1/UserLayout";
 import CountdownTimer from "../../utils/CountdownTimer"; 
 import useAuth from "../../Hooks/useAuth"; 
 import Swal from "sweetalert2";
+import axiosClient from "../../Service/axiosClient";
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -48,8 +49,8 @@ export default function MyOrdersPage() {
       try {
         const statusParam = selectedStatus === "all" ? null : selectedStatus;
         const data = await OrderApi(pageNumber, pageSize, statusParam);
-        setOrders(data.items);
-        setTotalPages(data.totalPages); // cần backend trả về
+        setOrders(data.data?.items || []);
+        setTotalPages(data.data?.totalPages || 1);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -79,15 +80,7 @@ export default function MyOrdersPage() {
       const token = await ensureTokenValid();
       if (!token) return;
 
-      const res = await fetch(`http://localhost:5230/api/Order/user-confirm/${orderId}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-
-      const data = await res.json();
+      const data = await axiosClient.put(`/Order/user-confirm/${orderId}`);
       if (data.isSuccess) {
         Swal.fire({
           icon: 'success',
@@ -131,15 +124,7 @@ export default function MyOrdersPage() {
       const token = await ensureTokenValid();
       if (!token) return;
 
-      const res = await fetch(`http://localhost:5230/api/Order/cancel/${orderId}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-
-      const data = await res.json();
+      const data = await axiosClient.put(`/Order/cancel/${orderId}`);
 
       if (data.isSuccess) {
         Swal.fire({

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routePaths";
 import { FiCheckCircle, FiXCircle, FiLoader } from "react-icons/fi";
 import Swal from "sweetalert2";
 
@@ -38,7 +39,7 @@ const ActivateAccount = () => {
             background: '#1e1e2d',
             color: '#fff',
           }).then(() => {
-            navigate("/login");
+            navigate(ROUTES.LOGIN);
           });
         } else {
           setStatus("error");
@@ -101,7 +102,7 @@ const ActivateAccount = () => {
 
         {status === "error" && (
           <button 
-            onClick={() => navigate("/register")}
+            onClick={() => navigate(ROUTES.REGISTER)}
             style={{
               marginTop: "25px",
               padding: "10px 25px",

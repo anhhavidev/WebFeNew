@@ -1,7 +1,8 @@
+// Service Admin quản lý đơn hàng
 import axios from 'axios';
 const API = "http://localhost:5230/api/Admin";
 
-//admin 
+// Lấy tất cả đơn hàng (phân trang + bộ lọc)
 export async function GetAllOrder(pageNumber, pageSize, token, filters = {}) {
   try {
     const respone = await axios.get(`${API}/GetOrderAdmin`, {
@@ -23,6 +24,7 @@ export async function GetAllOrder(pageNumber, pageSize, token, filters = {}) {
     throw error;
   }
 }
+// Lấy chi tiết đơn hàng (ParentOrder) cho Admin
 export async function GetOrderDetailAdmin(parentorderid, token) {
   try {
     const respone = await axios.get(`${API}/GetOrderAdmin/${parentorderid}`, {
@@ -37,6 +39,7 @@ export async function GetOrderDetailAdmin(parentorderid, token) {
     throw error;
   }
 }
+// Admin hủy đơn hàng
 export async function CancelOrderAdmin(orderId, reason, token) {
   const res = await fetch(`http://localhost:5230/api/Order/cancel-admin/${orderId}`, {
     method: "PUT",

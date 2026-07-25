@@ -1,6 +1,8 @@
+// Component đếm ngược thời gian, gọi callback khi hết hạn
 import React, { useEffect, useState } from "react";
 
 export default function CountdownTimer({ expireTime, onExpire }) {
+  // Tính thời gian còn lại (ms) từ thời điểm hiện tại đến expireTime
   const calculateTimeLeft = () => {
     const now = new Date().getTime();
     const expiry = new Date(expireTime).getTime();

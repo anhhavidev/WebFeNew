@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ROUTES } from '../../constants/routePaths';
 import UserLayout from '../../layout1/UserLayout';
 import { FaCheckCircle, FaReceipt, FaShoppingBag } from 'react-icons/fa';
 import styles from './VnpayResultPage.module.css'; // Reusing the same beautiful styles
@@ -28,7 +29,7 @@ export default function OrderSuccessPage() {
           </div>
 
           <div className={styles.actions}>
-            <Link to="/" className={styles.btnHome}>
+            <Link to={ROUTES.HOME} className={styles.btnHome}>
               <FaShoppingBag className="me-2" /> Tiếp tục mua sắm
             </Link>
             <Link to={orderId ? `/user/orders/${orderId}` : "/orders"} className={styles.btnOrder}>

@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function SellerDashboardChar() {
+export default function SellerDashboardChart() {
   const [data, setData]         = useState(null);
   const [filter, setFilter]     = useState("This Month");
   const [fromDate, setFromDate] = useState("");
