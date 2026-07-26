@@ -1,10 +1,11 @@
 .resultContainer {
-  min-height: 80vh;
+  min-height: calc(100vh - 94px);
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 20px;
+  padding: 40px 20px;
+  box-sizing: border-box;
 }
 
 .resultCard {
@@ -122,4 +123,24 @@
 .btnOrder:hover {
   background: #f0f7ff;
   color: #2575fc;
+}
+
+@media (max-width: 576px) {
+  .actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .btnHome,
+  .btnOrder {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .resultCard {
+    padding: 30px 20px;
+  }
 }

@@ -1,22 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../constants/routePaths';
-import UserLayout from '../../layout1/UserLayout';
-import { getProductById } from '../../Service/ProductApi';
-import { addProductToCart } from '../../Service/cartApi';
-import { addToLocalCart } from '../../utils/cartStorage';
-import { useCart } from '../../constants/CartContext';
-import { getCartItems } from '../../Service/cartApi';
-import useAuth from '../../Hooks/useAuth';
-import {
-  FiShoppingCart, FiArrowLeft, FiStar, FiCheckCircle,
-  FiPackage, FiTruck, FiShield, FiHeart, FiShare2, FiChevronRight
-} from 'react-icons/fi';
-import './ProductDetail.css';
-
-import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getProductById, getPaginatedProducts } from "../../Service/ProductApi";
+import UserLayout from "../../layout1/UserLayout";
+import useAuth from "../../Hooks/useAuth";
+import { useCart } from "../../constants/CartContext";
+import { ROUTES } from "../../constants/routePaths";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import "./CustomerPages.css";
+import { FaStar, FaShoppingBag, FaHeart, FaTruck, FaShieldAlt, FaSyncAlt, FaMinus, FaPlus, FaArrowLeft } from "react-icons/fa";
 
 const MySwal = withReactContent(Swal);
 
@@ -25,346 +18,238 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { user, ensureTokenValid } = useAuth();
   const { setCartCount } = useCart();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeImg, setActiveImg] = useState(0);
-  const [qty, setQty] = useState(1);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [wishlist, setWishlist] = useState(false);
-  const [alert, setAlert] = useState({ msg: '', type: '', visible: false });
+  const [error, setError] = useState("");
+  const [selectedImg, setSelectedImg] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState("description");
+  const [isFav, setIsFav] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     setLoading(true);
     getProductById(id)
       .then(res => {
-        setProduct(res.data || res);
-        setActiveImg(0);
+        const p = res.data || res;
+        setProduct(p);
+        setSelectedImg(0);
+        getPaginatedProducts({ pageSize: 4, categoryId: p.categoryId || "" })
+          .then(data => {
+            const all = data.items || data.data?.items || [];
+            setRelatedProducts(all.filter(item => item.productId !== p.productId).slice(0, 4));
+          })
+          .catch(() => {});
       })
-      .catch(() => setError('Không tìm thấy sản phẩm.'))
+      .catch(() => setError("Không tìm thấy sản phẩm."))
       .finally(() => setLoading(false));
   }, [id]);
-
-  const showAlert = (msg, type = 'success') => {
-    setAlert({ msg, type, visible: true });
-    setTimeout(() => setAlert(a => ({ ...a, visible: false })), 3000);
-  };
 
   const handleAddToCart = async () => {
     if (!user) {
       const result = await MySwal.fire({
-        title: "Bạn chưa đăng nhập",
-        text: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!",
-        icon: "info",
-        showCancelButton: true,
-        confirmButtonText: "Đăng nhập ngay",
-        cancelButtonText: "Để sau",
-        confirmButtonColor: "#2563eb",
-        cancelButtonColor: "#64748b",
-        borderRadius: "15px"
+        title: "Bạn chưa đăng nhập", text: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!", icon: "info",
+        showCancelButton: true, confirmButtonText: "Đăng nhập ngay", cancelButtonText: "Để sau",
       });
-
-      if (result.isConfirmed) {
-        navigate(ROUTES.LOGIN);
-      }
+      if (result.isConfirmed) navigate(ROUTES.LOGIN);
       return;
     }
-
     const loadingToast = toast.loading("Đang thêm vào giỏ...");
     try {
       const token = await ensureTokenValid();
-      if (!token) {
-        toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
-        navigate(ROUTES.LOGIN);
-        return;
-      }
-
-      const result = await addProductToCart(product.productId, qty, token);
+      if (!token) { toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast }); navigate(ROUTES.LOGIN); return; }
+      const { addProductToCart, getCartItems } = await import("../../Service/cartApi");
+      const result = await addProductToCart(product.productId, quantity, token);
       if (result.isSuccess) {
         const res = await getCartItems(token);
         const sellerGroups = res.data?.sellerGroups || [];
         let total = 0;
-        sellerGroups.forEach(group => {
-          if (group.cartItems) {
-            group.cartItems.forEach(item => {
-              total += item.soLuong;
-            });
-          }
-        });
+        sellerGroups.forEach(g => g.cartItems?.forEach(i => total += i.soLuong));
         setCartCount(total);
-        setAddedToCart(true);
         toast.success("Đã thêm vào giỏ hàng!", { id: loadingToast });
-        showAlert("Đã thêm vào giỏ hàng!");
       } else {
-        toast.error(result.message || "Hết hàng hoặc lỗi.", { id: loadingToast });
-        showAlert("Lỗi khi thêm vào giỏ hàng.", "error");
+        toast.error(result.message || "Không thể thêm sản phẩm.", { id: loadingToast });
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Thao tác thất bại.", { id: loadingToast });
-      showAlert("Có lỗi xảy ra.", "error");
+      toast.error("Có lỗi xảy ra.", { id: loadingToast });
     }
   };
 
-  const handleBuyNow = async () => {
-    if (!user) {
-      const result = await MySwal.fire({
-        title: "Bạn chưa đăng nhập",
-        text: "Vui lòng đăng nhập để mua sản phẩm!",
-        icon: "info",
-        showCancelButton: true,
-        confirmButtonText: "Đăng nhập ngay",
-        cancelButtonText: "Để sau",
-        confirmButtonColor: "#2563eb",
-        cancelButtonColor: "#64748b",
-        borderRadius: "15px"
-      });
+  if (loading) return <UserLayout><div className="ed-pd"><div style={{ textAlign: 'center', padding: '80px 0', fontSize: 14, color: 'var(--ed-text-muted)' }}>Đang tải...</div></div></UserLayout>;
+  if (error || !product) return <UserLayout><div className="ed-pd"><div style={{ textAlign: 'center', padding: '80px 0', fontSize: 14, color: 'var(--ed-red)' }}>{error || "Không tìm thấy sản phẩm"}</div></div></UserLayout>;
 
-      if (result.isConfirmed) {
-        navigate(ROUTES.LOGIN);
-      }
-      return;
-    }
-
-    const loadingToast = toast.loading("Đang xử lý...");
-    try {
-      const token = await ensureTokenValid();
-      if (!token) {
-        toast.error("Phiên đăng nhập hết hạn.", { id: loadingToast });
-        navigate(ROUTES.LOGIN);
-        return;
-      }
-
-      const result = await addProductToCart(product.productId, qty, token);
-      if (result.isSuccess) {
-        const res = await getCartItems(token);
-        const sellerGroups = res.data?.sellerGroups || [];
-        let total = 0;
-        sellerGroups.forEach(group => {
-          if (group.cartItems) {
-            group.cartItems.forEach(item => {
-              total += item.soLuong;
-            });
-          }
-        });
-        setCartCount(total);
-        toast.success("Đã chuẩn bị giỏ hàng!", { id: loadingToast });
-        navigate(ROUTES.CART);
-      } else {
-        toast.error(result.message || "Hết hàng hoặc lỗi.", { id: loadingToast });
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Thao tác thất bại.", { id: loadingToast });
-    }
-  };
-
-  /* ───────── Loading ───────── */
-  if (loading) return (
-    <UserLayout>
-      <div className="pd-loading-screen">
-        <div className="pd-loader" />
-        <p>Đang tải sản phẩm...</p>
-      </div>
-    </UserLayout>
-  );
-
-  /* ───────── Error ───────── */
-  if (error || !product) return (
-    <UserLayout>
-      <div className="pd-error-screen">
-        <p>{error || 'Không có dữ liệu.'}</p>
-        <button onClick={() => navigate(-1)} className="pd-back-btn">
-          <FiArrowLeft /> Quay lại
-        </button>
-      </div>
-    </UserLayout>
-  );
-
-  /* ───────── Compute ───────── */
-  const images = [
-    product.linkImage,
-    ...(product.imageGallery || []),
-  ].filter(Boolean);
-
-  const finalPrice  = product.discountPercent > 0 ? product.disCountPrice : product.originalPrice;
-  const ratingStars = Math.round(product.rating || 0);
-  const inStock     = (product.stockQuantity ?? 0) > 0;
+  const images = product.linkImage ? [product.linkImage, ...(product.images || [])] : (product.images || [product.linkImage || 'https://via.placeholder.com/600']);
 
   return (
     <UserLayout>
-      {/* ── Toast Alert ── */}
-      {alert.visible && (
-        <div className={`pd-toast ${alert.type}`}>{alert.msg}</div>
-      )}
+      <div className="ed-pd">
+        {/* Breadcrumb */}
+        <div className="ed-pd-breadcrumb">
+          <button className="ed-pd-back" onClick={() => navigate(-1)}>
+            <FaArrowLeft /> Quay lại
+          </button>
+          <nav className="ed-pd-breadcrumb-nav" style={{ display: window.innerWidth < 640 ? 'none' : 'flex' }}>
+            <button onClick={() => navigate(ROUTES.HOME)}>Trang Chủ</button>
+            <span>/</span>
+            <button onClick={() => navigate('/')}>{product.categoryName || 'Danh mục'}</button>
+            <span>/</span>
+            <span>{product.name}</span>
+          </nav>
+        </div>
 
-      <div className="pd-wrapper">
-
-        {/* ── Breadcrumb ── */}
-        <nav className="pd-breadcrumb">
-          <Link to={ROUTES.HOME}>Trang chủ</Link>
-          <FiChevronRight size={13} />
-          {product.categoryName && (
-            <>
-              <Link to={`/?category=${product.categoryId}`}>{product.categoryName}</Link>
-              <FiChevronRight size={13} />
-            </>
-          )}
-          <span>{product.name}</span>
-        </nav>
-
-        {/* ── Main content ── */}
-        <div className="pd-main">
-
-          {/* ── LEFT: Image gallery ── */}
-          <div className="pd-gallery">
-            {/* Thumbnails */}
+        {/* Main Product Section */}
+        <div className="ed-pd-main">
+          {/* Gallery */}
+          <div className="ed-pd-gallery">
+            <div className="ed-pd-main-img">
+              <img src={images[selectedImg]} alt={product.name} referrerPolicy="no-referrer" />
+              {product.discountPercent > 0 && (
+                <span className="ed-pd-discount-badge">-{product.discountPercent}% OFF</span>
+              )}
+            </div>
             {images.length > 1 && (
-              <div className="pd-thumbs">
-                {images.map((img, i) => (
+              <div className="ed-pd-thumbs">
+                {images.map((img, idx) => (
                   <button
-                    key={i}
-                    className={`pd-thumb ${activeImg === i ? 'active' : ''}`}
-                    onClick={() => setActiveImg(i)}
+                    key={idx}
+                    className={`ed-pd-thumb ${selectedImg === idx ? 'active' : ''}`}
+                    onClick={() => setSelectedImg(idx)}
                   >
-                    <img src={img} alt={`thumb-${i}`} />
+                    <img src={img} alt="" referrerPolicy="no-referrer" />
                   </button>
                 ))}
               </div>
             )}
-
-            {/* Main image */}
-            <div className="pd-main-img-wrap">
-              <img
-                className="pd-main-img"
-                src={images[activeImg]}
-                alt={product.name}
-              />
-              {product.discountPercent > 0 && (
-                <span className="pd-discount-badge">-{product.discountPercent}%</span>
-              )}
-              <button
-                className={`pd-wishlist-btn ${wishlist ? 'active' : ''}`}
-                onClick={() => setWishlist(w => !w)}
-                title="Yêu thích"
-              >
-                <FiHeart size={18} />
-              </button>
-            </div>
           </div>
 
-          {/* ── RIGHT: Info ── */}
-          <div className="pd-info">
-
-            {/* Category pill */}
-            {product.categoryName && (
-              <span className="pd-category-pill">{product.categoryName}</span>
-            )}
-
-            <h1 className="pd-product-name">{product.name}</h1>
-
-            {/* Rating */}
-            <div className="pd-rating-row">
-              <div className="pd-stars">
-                {[1,2,3,4,5].map(s => (
-                  <FiStar
-                    key={s}
-                    size={16}
-                    className={s <= ratingStars ? 'star-filled' : 'star-empty'}
-                  />
-                ))}
+          {/* Details */}
+          <div className="ed-pd-details">
+            <div>
+              <div className="ed-pd-meta">
+                <span className="ed-pd-category">{product.categoryName || 'Sản phẩm'}</span>
+                <span className="ed-pd-stock">Còn {product.stockQuantity || 'Liên hệ'} sản phẩm</span>
               </div>
-              <span className="pd-rating-count">
-                {product.rating
-                  ? `${product.rating}/5 · ${product.reviewCount} đánh giá`
-                  : 'Chưa có đánh giá'}
-              </span>
+              <h1 className="ed-pd-name">{product.name}</h1>
+              <div className="ed-pd-rating">
+                <div className="ed-pd-rating-stars">
+                  {product.rating ? <><FaStar /> <span className="ed-pd-rating-num">{product.rating}</span></> : <span>Chưa có đánh giá</span>}
+                </div>
+                {product.reviewCount > 0 && <><span className="ed-pd-rating-divider">|</span><span>({product.reviewCount} đánh giá)</span></>}
+                <span className="ed-pd-rating-divider">|</span>
+                <span className="ed-pd-sku">Mã SP: AUR-{product.productId}</span>
+              </div>
             </div>
 
-            {/* Price */}
-            <div className="pd-price-block">
-              <span className="pd-price-final">
-                {finalPrice?.toLocaleString('vi-VN')}₫
-              </span>
+            <div className="ed-pd-price-box">
+              <span className="ed-pd-price">{(product.discountPercent > 0 ? product.disCountPrice : product.originalPrice).toLocaleString()}₫</span>
               {product.discountPercent > 0 && (
-                <span className="pd-price-origin">
-                  {product.originalPrice?.toLocaleString('vi-VN')}₫
-                </span>
+                <span className="ed-pd-price-original">{product.originalPrice.toLocaleString()}₫</span>
               )}
             </div>
 
-            {/* Description */}
-            <p className="pd-desc">{product.description}</p>
+            <p className="ed-pd-desc">{product.description}</p>
 
-            {/* Stock status */}
-            <div className={`pd-stock ${inStock ? 'in' : 'out'}`}>
-              <FiCheckCircle size={15} />
-              {inStock
-                ? `Còn hàng · ${product.stockQuantity} sản phẩm`
-                : 'Hết hàng'}
+            <div className="ed-pd-qty-area">
+              <label className="ed-pd-qty-label">Số Lượng:</label>
+              <div className="ed-pd-qty">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}><FaMinus /></button>
+                <span>{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)}><FaPlus /></button>
+              </div>
             </div>
 
-            {/* Quantity + Add to cart */}
-            <div className="pd-actions">
-              <div className="pd-qty-control">
+            <div className="ed-pd-actions">
+              <div className="ed-pd-action-row">
+                <button className="ed-btn-primary" onClick={handleAddToCart}>
+                  <FaShoppingBag /> Thêm Vào Giỏ Hàng
+                </button>
+                <button className="ed-btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={handleAddToCart}>
+                  Mua Ngay
+                </button>
                 <button
-                  className="pd-qty-btn"
-                  onClick={() => setQty(q => Math.max(1, q - 1))}
-                  disabled={qty <= 1}
-                >−</button>
-                <span className="pd-qty-val">{qty}</span>
-                <button
-                  className="pd-qty-btn"
-                  onClick={() => setQty(q => Math.min(product.stockQuantity, q + 1))}
-                  disabled={qty >= product.stockQuantity}
-                >+</button>
+                  className={`ed-pd-wishlist-btn ${isFav ? 'fav' : ''}`}
+                  onClick={() => setIsFav(!isFav)}
+                  title="Yêu thích"
+                >
+                  <FaHeart />
+                </button>
               </div>
-
-              <button
-                className={`pd-add-btn ${addedToCart ? 'added' : ''}`}
-                onClick={handleAddToCart}
-                disabled={!inStock}
-              >
-                <FiShoppingCart size={17} />
-                {addedToCart ? 'Đã thêm vào giỏ!' : 'Thêm vào giỏ hàng'}
-              </button>
-
-              <button 
-                className="pd-buy-btn" 
-                onClick={handleBuyNow}
-                disabled={!inStock}
-              >
-                Mua ngay
-              </button>
-            </div>
-
-            {/* Trust badges */}
-            <div className="pd-trust-row">
-              <div className="pd-trust-item">
-                <FiTruck size={18} /> <span>Giao hàng toàn quốc</span>
-              </div>
-              <div className="pd-trust-item">
-                <FiShield size={18} /> <span>Bảo hành 30 ngày</span>
-              </div>
-              <div className="pd-trust-item">
-                <FiPackage size={18} /> <span>Đổi trả dễ dàng</span>
+              <div className="ed-pd-guarantees">
+                <div><FaTruck /><span>Freeship</span></div>
+                <div><FaShieldAlt /><span>Chính Hãng</span></div>
+                <div><FaSyncAlt /><span>30 Ngày Đổi Trả</span></div>
               </div>
             </div>
-
-            {/* Share */}
-            <button className="pd-share-btn" onClick={() => {
-              navigator.clipboard?.writeText(window.location.href);
-              showAlert('Đã sao chép link!');
-            }}>
-              <FiShare2 size={14} /> Chia sẻ sản phẩm
-            </button>
           </div>
         </div>
 
-        {/* ── Back button ── */}
-        <button onClick={() => navigate(-1)} className="pd-back-link">
-          <FiArrowLeft size={15} /> Quay lại danh sách
-        </button>
+        {/* Tabs Section */}
+        <div className="ed-pd-tabs">
+          <div className="ed-pd-tab-bar">
+            <button className={`ed-pd-tab-btn ${activeTab === 'description' ? 'active' : ''}`} onClick={() => setActiveTab('description')}>Mô Tả Chi Tiết</button>
+            <button className={`ed-pd-tab-btn ${activeTab === 'specs' ? 'active' : ''}`} onClick={() => setActiveTab('specs')}>Thông Số Kỹ Thuật</button>
+            <button className={`ed-pd-tab-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>Đánh Giá</button>
+          </div>
+
+          {activeTab === 'description' && (
+            <div className="ed-pd-tab-content">
+              <p>{product.description}</p>
+              <h4 style={{ marginTop: 24 }}>Điểm nổi bật của sản phẩm:</h4>
+              <ul>
+                <li>Thiết kế hiện đại mang lại vẻ ngoài lịch lãm và sang trọng.</li>
+                <li>Chất liệu được tuyển chọn kỹ lưỡng, gia công tỉ mỉ từng đường kim mũi chỉ.</li>
+                <li>Thích hợp làm quà tặng cao cấp hoặc sử dụng thường ngày.</li>
+              </ul>
+            </div>
+          )}
+
+          {activeTab === 'specs' && (
+            <div className="ed-pd-tab-content">
+              <table className="ed-pd-specs-table">
+                <tbody>
+                  <tr><td>Chất liệu</td><td>Cao cấp</td></tr>
+                  <tr><td>Bảo hành</td><td>12 tháng</td></tr>
+                  <tr><td>Xuất xứ</td><td>Việt Nam</td></tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="ed-pd-tab-content">
+              <div className="ed-pd-reviews">
+                <p style={{ color: 'var(--ed-text-muted)', fontStyle: 'italic' }}>Chưa có đánh giá nào cho sản phẩm này.</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="ed-related">
+            <h2 className="ed-related-title">Sản Phẩm Tương Tự</h2>
+            <div className="ed-related-grid">
+              {relatedProducts.map(p => (
+                <div key={p.productId} className="ed-prod-card" onClick={() => { window.scrollTo(0, 0); navigate(`/product/${p.productId}`); }}>
+                  <div className="ed-prod-img-wrap">
+                    <img src={p.linkImage} alt={p.name} referrerPolicy="no-referrer" />
+                    {p.discountPercent > 0 && (
+                      <div className="ed-prod-badges"><span className="ed-prod-badge">-{p.discountPercent}%</span></div>
+                    )}
+                  </div>
+                  <div className="ed-prod-info" style={{ padding: 12 }}>
+                    <span className="ed-prod-category">{p.categoryName || ''}</span>
+                    <h3 className="ed-prod-name">{p.name}</h3>
+                    <div className="ed-prod-footer" style={{ border: 'none', padding: 0, marginTop: 8 }}>
+                      <div className="ed-prod-price">{(p.discountPercent > 0 ? p.disCountPrice : p.originalPrice).toLocaleString()}₫</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </UserLayout>
   );

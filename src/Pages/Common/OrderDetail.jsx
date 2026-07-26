@@ -102,8 +102,8 @@ export default function OrderDetail() {
           child.orderId === orderChildId
             ? {
               ...child,
-              orderStatus: result.data.status, // cập nhật trạng thái đơn con
-              paymentStatus: result.data.paymentStatus, // nếu có
+              orderStatus: result.data?.status || "Received", // cập nhật trạng thái đơn con
+              paymentStatus: result.data?.paymentStatus || "Paid", // nếu có
             }
             : child
         ),
@@ -120,7 +120,7 @@ export default function OrderDetail() {
     <UserLayout>
       <div className="cp-container">
         <h3>🧾 Chi tiết đơn hàng #{orderDetail.parentOrderId}</h3>
-        <form className="border p-4 rounded shadow-sm bg-light">
+        <div className="border p-4 rounded shadow-sm bg-light">
           <div className="row mb-3">
             <label className="col-sm-2 col-form-label">Mã đơn hàng cha:</label>
             <div className="col-sm-10">
@@ -215,6 +215,7 @@ export default function OrderDetail() {
               {/* --- Nút xác nhận nhận hàng nếu đã giao --- */}
               {child.orderStatus === "Delivered" && (
                 <button
+                  type="button"
                   className="btn btn-success mt-2"
                   onClick={() => handleConfirmReceived(child.orderId)}
                 >
@@ -246,7 +247,7 @@ export default function OrderDetail() {
               />
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </UserLayout>
   );

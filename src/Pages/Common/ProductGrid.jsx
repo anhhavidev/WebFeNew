@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaShoppingCart } from 'react-icons/fa';
+import { FaStar, FaHeart, FaEye, FaShoppingCart } from 'react-icons/fa';
 
-export default function ProductGrid({ products, onAddToCart }) {
+export default function ProductGrid({ products, onAddToCart, onToggleWishlist, wishlistIds }) {
   if (!products || products.length === 0) {
     return (
       <div className="empty-state">
@@ -12,41 +12,73 @@ export default function ProductGrid({ products, onAddToCart }) {
   }
 
   return (
-    <div className="cp-product-grid">
+    <div className="ed-product-grid">
       {products.map(product => (
-        <div key={product.productId} className="cp-product-card">
-          <Link to={`/product/${product.productId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="cp-product-img-wrap">
+        <div key={product.productId} className="ed-prod-card">
+          <div className="ed-prod-img-wrap">
+            <Link to={`/product/${product.productId}`}>
               <img src={product.linkImage} alt={product.name} />
-              {product.discountPercent > 0 && (
-                <span className="cp-discount-badge">-{product.discountPercent}%</span>
-              )}
+            </Link>
+
+            {product.discountPercent > 0 && (
+              <div className="ed-prod-badges">
+                <span className="ed-prod-badge">-{product.discountPercent}%</span>
+              </div>
+            )}
+
+            <div className="ed-prod-actions">
+              <button
+                className={`ed-prod-action-btn ${wishlistIds?.includes(product.productId) ? 'fav' : ''}`}
+                onClick={(e) => { e.preventDefault(); onToggleWishlist?.(product); }}
+                title="Yêu thích"
+              >
+                <FaHeart />
+              </button>
+              <Link to={`/product/${product.productId}`} className="ed-prod-action-btn" title="Xem chi tiết">
+                <FaEye />
+              </Link>
             </div>
-            <div className="cp-product-info">
-              <span className="cp-product-category">{product.categoryName || ''}</span>
-              <h3 className="cp-product-name">{product.name}</h3>
-              <p className="cp-product-desc">{product.description}</p>
-              <div className="cp-product-rating">
-                {product.rating ? (
-                  <><FaStar /> {product.rating} / 5 ({product.reviewCount} đánh giá)</>
-                ) : (
-                  <span className="text-muted">Chưa có đánh giá</span>
+
+            <div className="ed-prod-overlay-btn">
+              <button onClick={() => onAddToCart(product)}>
+                <FaShoppingCart /> Thêm Vào Giỏ
+              </button>
+            </div>
+          </div>
+
+          <div className="ed-prod-info">
+            <div>
+              <span className="ed-prod-category">{product.categoryName || ''}</span>
+              <Link to={`/product/${product.productId}`} style={{ textDecoration: 'none' }}>
+                <h3 className="ed-prod-name">{product.name}</h3>
+              </Link>
+              <div className="ed-prod-rating">
+                <div className="ed-prod-stars">
+                  {product.rating ? (
+                    <><FaStar /> <span className="ed-prod-rating-num">{product.rating}</span></>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--ed-text-muted)' }}>Chưa có đánh giá</span>
+                  )}
+                </div>
+                {product.reviewCount > 0 && (
+                  <span className="ed-prod-rating-count">({product.reviewCount})</span>
                 )}
               </div>
-              <div className="cp-product-prices">
+            </div>
+
+            <div className="ed-prod-footer">
+              <div>
+                <div className="ed-prod-price">
+                  {(product.discountPercent > 0 ? product.disCountPrice : product.originalPrice).toLocaleString()}₫
+                </div>
                 {product.discountPercent > 0 && (
-                  <span className="cp-price-original">{product.originalPrice.toLocaleString()}đ</span>
+                  <span className="ed-prod-price-original">{product.originalPrice.toLocaleString()}₫</span>
                 )}
-                <span className="cp-price-current">
-                  {(product.discountPercent > 0 ? product.disCountPrice : product.originalPrice).toLocaleString()}đ
-                </span>
               </div>
+              <button className="ed-prod-mobile-cart" onClick={() => onAddToCart(product)}>
+                <FaShoppingCart />
+              </button>
             </div>
-          </Link>
-          <div className="p-3">
-            <button className="cp-btn-add-cart" onClick={() => onAddToCart(product)}>
-              <FaShoppingCart /> Thêm vào giỏ
-            </button>
           </div>
         </div>
       ))}
